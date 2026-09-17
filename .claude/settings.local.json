@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/chan/.config/**)",
+      "Read(//home/chan/.local/share/**)",
+      "Bash(find ~ -maxdepth 4 -iname \"*nvim*\" 2>/dev/null)"
+    ]
+  }
+}
