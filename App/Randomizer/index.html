@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Randomizer — Random Habit Bag</title>
+<link rel="icon" href="data:," />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen bg-white text-black antialiased overflow-x-hidden">
+
+  <!-- Signature red strip -->
+  <div class="fixed top-0 inset-x-0 h-1 bg-[#D6001C] z-40"></div>
+
+  <!-- Blank-time banner -->
+  <div id="blank-banner" class="hidden fixed top-1 inset-x-0 z-50 bg-black text-white px-4 py-3 flex items-center justify-between gap-3">
+    <span class="text-xs font-bold uppercase tracking-widest">Feeling blank? Shuffle now.</span>
+    <div class="flex items-center gap-2 shrink-0">
+      <button id="banner-shuffle" class="bg-[#D6001C] text-white text-xs font-bold uppercase tracking-widest px-3 py-1.5">Shuffle</button>
+      <button id="banner-dismiss" class="text-white/70 text-sm px-2 py-1.5 leading-none" aria-label="Dismiss">×</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header id="app-header" class="fixed top-1 inset-x-0 z-30 flex items-center border-b border-black px-6 py-5 bg-white">
+    <div class="flex items-center gap-2.5">
+      <span class="w-3 h-3 bg-[#D6001C] shrink-0"></span>
+      <h1 class="text-sm font-bold uppercase tracking-[0.2em]">Randomizer</h1>
+    </div>
+  </header>
+
+  <!-- Main: nothing but the shuffle button -->
+  <main class="min-h-[100dvh] flex flex-col items-center justify-center px-6">
+    <button id="shuffle-btn"
+      class="relative w-56 h-56 sm:w-64 sm:h-64 bg-black hover:bg-[#111] active:scale-[0.97] transition-colors flex flex-col items-center justify-center gap-3 px-4 text-white disabled:opacity-30 disabled:cursor-not-allowed">
+      <span id="shuffle-icon" class="w-6 h-6 bg-[#D6001C] shrink-0"></span>
+      <span id="shuffle-label" class="text-2xl font-bold uppercase tracking-[0.15em] text-center break-words">Shuffle</span>
+    </button>
+
+    <p id="empty-hint" class="hidden text-xs font-bold uppercase tracking-widest text-black/50 mt-6 text-center px-4">Tap + to add your first habit</p>
+  </main>
+
+  <!-- + button -->
+  <button id="add-habit-fab" title="Add habit" aria-label="Add habit"
+    class="fixed z-30 w-16 h-16 bg-[#D6001C] hover:bg-[#b8000f] active:scale-95 transition-transform text-white text-3xl font-bold flex items-center justify-center leading-none">
+    +
+  </button>
+
+  <!-- Manage habits modal: add form + habit list + new month -->
+  <div id="manage-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 px-0 sm:px-6">
+    <div class="modal-pop bg-white border-t-2 sm:border-2 border-black w-full sm:max-w-md max-h-[85dvh] overflow-y-auto p-6">
+      <div class="flex items-center justify-between mb-6 pb-4 border-b border-black">
+        <h2 class="text-xs font-bold uppercase tracking-[0.2em]">Manage habits</h2>
+        <button id="manage-close" class="text-lg font-bold leading-none w-10 h-10 flex items-center justify-center" aria-label="Close">×</button>
+      </div>
+
+      <form id="habit-form" class="space-y-5 mb-8">
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-widest text-black/60 mb-2">Habit name</label>
+          <input id="habit-name" type="text" required placeholder="Drink water" maxlength="60"
+            class="w-full bg-transparent border-b-2 border-black px-0 py-2 text-base text-black placeholder-black/30 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-widest text-black/60 mb-2">Type</label>
+          <div class="grid grid-cols-2 border-2 border-black">
+            <label class="cursor-pointer">
+              <input type="radio" name="habit-type" value="good" checked class="peer sr-only" />
+              <div class="text-center py-2.5 text-xs font-bold uppercase tracking-widest text-black peer-checked:bg-black peer-checked:text-white border-r-2 border-black">
+                Good
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="habit-type" value="bad" class="peer sr-only" />
+              <div class="text-center py-2.5 text-xs font-bold uppercase tracking-widest text-black peer-checked:bg-[#D6001C] peer-checked:text-white">
+                Bad
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-widest text-black/60 mb-2">Times per month</label>
+          <input id="habit-count" type="number" required min="1" max="500" value="10"
+            class="w-full bg-transparent border-b-2 border-black px-0 py-2 text-base text-black focus:outline-none" />
+        </div>
+
+        <button type="submit" class="w-full bg-black hover:bg-[#111] text-white font-bold uppercase tracking-widest text-sm py-3 transition-colors">
+          Add habit
+        </button>
+      </form>
+
+      <div class="flex items-center justify-between mb-3 pb-2 border-b border-black">
+        <h3 class="text-[11px] font-bold uppercase tracking-widest text-black/60">Your habits</h3>
+        <button id="new-month-btn" class="text-[11px] font-bold uppercase tracking-widest border-b-2 border-[#D6001C] text-[#D6001C] py-0.5">New Month</button>
+      </div>
+      <ul id="habit-list"></ul>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

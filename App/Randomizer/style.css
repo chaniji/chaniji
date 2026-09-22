@@ -1,0 +1,100 @@
+/* Swiss / International Typographic Style: flat, grid-aligned, Helvetica-first, black/white/red */
+
+:root {
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --red: #D6001C;
+}
+
+html, body {
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, "Segoe UI", system-ui, sans-serif;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+/* Keep header clear of the notch / status bar, below the red strip */
+#app-header {
+  padding-top: calc(1.1rem + var(--safe-t));
+  padding-left: calc(1.5rem + var(--safe-l));
+  padding-right: calc(1.5rem + var(--safe-r));
+}
+
+#blank-banner {
+  padding-top: calc(0.9rem + var(--safe-t));
+  padding-left: calc(1.25rem + var(--safe-l));
+  padding-right: calc(1.25rem + var(--safe-r));
+}
+
+/* Keep the FAB clear of the home-indicator / rounded corners */
+#add-habit-fab {
+  bottom: calc(1.75rem + var(--safe-b));
+  right: calc(1.75rem + var(--safe-r));
+}
+
+/* Bottom sheets: extra bottom padding so content clears the home-indicator */
+.modal-pop {
+  padding-bottom: calc(1.5rem + var(--safe-b));
+}
+
+/* Tabular figures for counts/dates — Swiss grids keep numerals aligned */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes tumble {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-90deg) scale(1.05); }
+  50% { transform: rotate(-180deg) scale(0.95); }
+  75% { transform: rotate(-270deg) scale(1.05); }
+  100% { transform: rotate(-360deg) scale(1); }
+}
+
+.modal-pop {
+  animation: pop-in 0.25s ease-out;
+}
+
+.shuffling #shuffle-icon {
+  display: inline-block;
+  animation: tumble 0.5s linear infinite;
+}
+
+/* Split-flap (departure-board) character flip */
+@keyframes flap-tick {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(-90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+.flap-char {
+  display: inline-block;
+  perspective: 220px;
+}
+
+.flap-inner {
+  display: inline-block;
+  transform-style: preserve-3d;
+}
+
+.flap-inner.flap-tick {
+  animation: flap-tick 0.08s linear;
+}
