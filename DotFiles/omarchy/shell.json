@@ -1,0 +1,52 @@
+{
+  "bar": {
+    "centerAnchor": "omarchy.clock",
+    "id": "chan.bar",
+    "layout": {
+      "center": [],
+      "left": [
+        {
+          "id": "omarchy.menu"
+        },
+        {
+          "id": "chan.workspaces"
+        }
+      ],
+      "right": [
+        {
+          "id": "omarchy.tray"
+        },
+        {
+          "id": "chan.agents"
+        },
+        {
+          "id": "chan.bluetooth"
+        },
+        {
+          "id": "chan.network"
+        },
+        {
+          "id": "chan.audio"
+        },
+        {
+          "id": "chan.monitor"
+        },
+        {
+          "id": "chan.power"
+        }
+      ]
+    },
+    "position": "top",
+    "transparent": false
+  },
+  "idle": {
+    "lock": 300,
+    "screensaver": 150
+  },
+  "plugins": [
+    {
+      "id": "chan.sunclock"
+    }
+  ],
+  "version": 1
+}

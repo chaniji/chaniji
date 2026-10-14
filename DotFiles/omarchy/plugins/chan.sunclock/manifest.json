@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "chan.sunclock",
+  "name": "Sun Clock",
+  "version": "1.0.0",
+  "author": "chan",
+  "description": "Desktop clock with a sun and moon arc, Roman hours and Greek weekday",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}
