@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 import qs.Commons
+import qs.services
 import qs.Ui
 import "MenuModel.js" as MenuModel
 
@@ -24,12 +25,51 @@ Item {
 
     if (payload.fontFamily) root.fontFamily = payload.fontFamily
 
+    // Dropdown mode: opened from the bar's menu strip, under the clicked word.
+    root.dropdownMode = payload.dropdown === true
+    root.anchorX = Number(payload.anchorX || 0)
+    // Strip mode: Super+Space highlights a word in the bar strip, no card.
+    root.stripWords = Array.isArray(payload.words) ? payload.words : []
+    root.stripIndex = Number(payload.index || 0)
+    root.stripMode = payload.strip === true && root.stripWords.length > 0
+    root.stripReturn = root.stripMode
+
     if (payload.mode === "select" || payload.mode === "input") {
       root.openDmenu(payload)
     } else {
       root.openRoute(payload.initialMenu || payload.menu || "root")
     }
+    root.dropdownRoot = root.dropdownMode ? root.activeMenu : ""
   }
+
+  property bool dropdownMode: false
+  property bool stripMode: false
+  property bool stripReturn: false
+  property var stripWords: []
+  property int stripIndex: 0
+
+  function stripMove(step) {
+    var n = root.stripWords.length
+    root.stripIndex = (root.stripIndex + step + n) % n
+  }
+
+  // Open the dropdown under the highlighted word.
+  function stripOpen() {
+    var word = root.stripWords[root.stripIndex]
+    root.stripMode = false
+    root.dropdownMode = true
+    root.anchorX = word.x
+    root.openRoute(word.id)
+    root.dropdownRoot = root.activeMenu
+  }
+
+  // Close the dropdown and go back to the highlighted word.
+  function stripBack() {
+    root.setFilter("")
+    root.stripMode = true
+  }
+  property int anchorX: 0
+  property string dropdownRoot: ""
 
   function close() {
     root.cancel()
@@ -77,17 +117,22 @@ Item {
 
   // Shared application engine (entries, hidden filters, icons, launch,
   // removal), owned by the shell and also used by the standalone launcher.
-  readonly property var appLibrary: root.shell ? root.shell.appLibrary : null
+  // Omarchy hands this clone a null appLibrary, so fall back to our own
+  // instance of the shell's AppLibrary.
+  readonly property var appLibrary: (root.shell && root.shell.appLibrary) ? root.shell.appLibrary : ownAppLibrary
+  property AppLibrary ownAppLibrary: AppLibrary { }
   property bool deleteConfirmOpen: false
   property var deleteTarget: null
   onOpenedChanged: if (!opened) { deleteConfirmOpen = false; deleteTarget = null }
   // Bound to the central [menu] section in shell.toml via Color.qml.
   // Each color already includes its alpha companion (composed in the
   // singleton), so consumers can drop them straight into a Rectangle.
-  property color background: Color.menu.background
+  // Compact: small mac-style dropdown, used when opened from the bar strip.
+  readonly property bool compact: root.dropdownMode
+  property color background: compact ? Util.alpha(Color.menu.background, 0.72) : Color.menu.background
   property color foreground: Color.menu.text
   property color border: Color.menu.border
-  property var borderSpec: Border.surfaceSpec("menu", "border", border, Math.max(1, Style.space(2)))
+  property var borderSpec: Border.surfaceSpec("menu", "border", border, compact ? 1 : Math.max(1, Style.space(2)))
   property color scrim: Color.menu.scrim
   property color selectedBackground: Color.menu.selectedBackground
   property color selectedText: Color.menu.selectedText
@@ -96,11 +141,12 @@ Item {
   readonly property real rowReservedBorderLeft: Border.left(selectedBorderSpec)
   readonly property real rowReservedBorderRight: Border.right(selectedBorderSpec)
   readonly property int cornerRadius: Style.cornerRadius
-  property int contentMargin: Style.spacing.panelPadding
-  property int headerHeight: Math.max(Style.space(34), Style.font.title + Style.spacing.controlPaddingY * 2)
-  property int contentSpacing: Style.spacing.md
-  property int baseRowHeight: Math.max(Style.space(50), Style.font.body + Style.spacing.rowPaddingX * 2)
-  property int detailRowHeight: Math.max(Style.space(58), Style.font.body + Style.font.caption + Style.spacing.rowPaddingX * 2)
+  property int contentMargin: compact ? Style.space(5) : Style.spacing.panelPadding
+  // Compact hides the title line; it comes back while you type a search.
+  property int headerHeight: (compact && !filterText) ? 0 : (compact ? Style.space(26) : Math.max(Style.space(34), Style.font.title + Style.spacing.controlPaddingY * 2))
+  property int contentSpacing: compact ? 0 : Style.spacing.md
+  property int baseRowHeight: compact ? Style.space(26) : Math.max(Style.space(50), Style.font.body + Style.spacing.rowPaddingX * 2)
+  property int detailRowHeight: compact ? Style.space(40) : Math.max(Style.space(58), Style.font.body + Style.font.caption + Style.spacing.rowPaddingX * 2)
   // How much of the first hidden row stays visible at the fold — enough to
   // read as a cut-off row rather than a bottom border.
   property int rowPeek: Math.round(baseRowHeight * 0.55)
@@ -108,7 +154,8 @@ Item {
   property int dividerHeight: Style.space(17)
   property bool searchDivider: false
   property int layoutSerial: 0
-  property int cardWidth: Math.min(root.dmenuActive ? Style.space(root.dmenuWidth) : ((root.activeMenu === "trigger.capture.screenrecord" || root.activeMenu === "style.font") ? Style.space(520) : Style.space(300)), panel.width - Style.gapsOut * 2)
+  property int cardWidth: Math.min(root.dmenuActive ? Style.space(root.dmenuWidth) : ((root.activeMenu === "trigger.capture.screenrecord" || root.activeMenu === "style.font") ? Style.space(520) : (root.showPreview ? Style.space(460) : (root.compact ? Style.space(210) : Style.space(300)))), panel.width - Style.gapsOut * 2)
+  property int previewPaneWidth: Style.space(190)
   property int visibleRowsHeight: root.dmenuActive ? dmenuRowListHeight(layoutSerial, displayModel.count, filterText) : rowListHeight(layoutSerial, displayModel.count, filterText, searchDivider)
   property int cardHeight: root.dmenuActive
     ? Math.min(contentMargin * 2 + headerHeight + (mode === "input" ? 0 : contentSpacing + visibleRowsHeight), panel.height - Style.gapsOut * 2)
@@ -288,11 +335,9 @@ Item {
   // (DesktopEntries) instead of a bash enumeration, so they carry image
   // icons, launch feedback, and uninstall support like the launcher.
   function mergeAppRows() {
-    console.log("DEBUGCHAN mergeAppRows called, appLibrary=", root.appLibrary, "shell=", root.shell)
     if (!root.appLibrary) return
 
     var rows = root.appLibrary.sortedEntries("")
-    console.log("DEBUGCHAN sortedEntries returned", rows.length)
     var appRows = []
     for (var j = 0; j < rows.length; j++) {
       var entry = rows[j].entry
@@ -509,6 +554,30 @@ Item {
     return MenuModel.displayRow(root.items, root.itemOrder, root.checkedResults, entry, detail, score, section)
   }
 
+  // Two-pane layout: the id of the row currently under the cursor, when it
+  // has children worth previewing on the right. Empty outside the plain
+  // (non-search, non-dmenu) browsing case so search and dmenu stay single-pane.
+  readonly property string previewTargetId: {
+    if (root.dmenuActive || root.filterText.trim()) return ""
+    if (root.selectedIndex < 0 || root.selectedIndex >= displayModel.count) return ""
+    var row = displayModel.get(root.selectedIndex)
+    if (row.kind !== "menu" && row.kind !== "link") return ""
+    var targetId = row.target || row.itemId
+    return root.childCount(targetId) > 0 ? targetId : ""
+  }
+  readonly property bool showPreview: !root.dropdownMode && previewTargetId.length > 0
+  readonly property var previewRows: {
+    if (!root.previewTargetId) return []
+    var rows = []
+    for (var i = 0; i < root.itemOrder.length; i++) {
+      var child = root.item(root.itemOrder[i])
+      if (!child || child.parent !== root.previewTargetId) continue
+      if (!root.isVisible(child)) continue
+      rows.push(root.displayRow(child, child.description, child.order))
+    }
+    return rows
+  }
+
   function rebuildDmenuDisplay() {
     displayModel.clear()
     root.searchDivider = false
@@ -703,6 +772,12 @@ Item {
 
   function goBack() {
     if (root.activeMenu === "root") return false
+    // In dropdown mode, going back from the opened group closes the menu.
+    if (root.dropdownMode && root.navStack.length === 0 && root.activeMenu === root.dropdownRoot) {
+      if (root.stripReturn) root.stripBack()
+      else root.cancel()
+      return true
+    }
 
     if (root.navStack.length > 0) {
       var previous = root.navStack[root.navStack.length - 1]
@@ -1026,19 +1101,17 @@ Item {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     exclusionMode: ExclusionMode.Ignore
 
-    // The card opens anchored to the bottom-left. The first search keystroke
-    // or submenu move freezes the top line where it currently sits — from
-    // then on the card grows and shrinks downward instead of re-anchoring
-    // on every resize, which made the menu jump around. The rows height is
-    // frozen at the same moment, so the starting menu also caps how tall the
-    // card may grow from there. Closing unfreezes both.
+    // The card opens anchored just under the top bar instead of centered.
+    // The first search keystroke or submenu move freezes the top line where
+    // it currently sits — from then on the card grows and shrinks downward
+    // instead of re-anchoring on every resize, which made the menu jump
+    // around. The rows height is frozen at the same moment, so the starting
+    // menu also caps how tall the card may grow from there. Closing
+    // unfreezes both.
     property int cardTop: -1
     property int maxRowsHeight: -1
-    // The bar floats 12px off the bottom edge (Bar.qml's floatMargin) and is
-    // Style.bar.sizeHorizontal tall, so the card must clear that whole strip
-    // instead of just the screen edge, or it draws on top of the bar.
-    readonly property int barClearance: 12 + Style.bar.sizeHorizontal + 12
-    readonly property int centeredTop: Math.max(Style.gapsOut, height - root.cardHeight - barClearance)
+    readonly property int barClearance: Style.bar.sizeHorizontal + Style.gapsOut
+    readonly property int centeredTop: Math.max(Style.gapsOut, barClearance)
     readonly property int effectiveCardTop: cardTop >= 0 ? cardTop : centeredTop
     function freezeCardTop() {
       if (visible && cardTop < 0) {
@@ -1050,7 +1123,7 @@ Item {
 
     Rectangle {
       anchors.fill: parent
-      color: root.scrim
+      color: (root.dropdownMode || root.stripMode) ? "transparent" : root.scrim
     }
 
     MouseArea {
@@ -1058,19 +1131,35 @@ Item {
       onClicked: root.cancel()
     }
 
+    // Underline under the selected strip word in the bar. The word's button
+    // has a 6px side margin (MenuStrip.qml), so the line spans just the text.
+    Rectangle {
+      readonly property var word: root.stripWords[root.stripIndex] || null
+      visible: root.stripMode && word !== null
+      x: word ? word.x + Style.space(6) : 0
+      y: word ? word.y + word.h - Style.space(5) : 0
+      width: word ? word.w - Style.space(6) * 2 : 0
+      height: Math.max(1, Style.space(2))
+      radius: height / 2
+      color: root.foreground
+    }
+
     BorderSurface {
       id: card
+      // Keep the card alive in strip mode: its keyCatcher holds key focus.
+      opacity: root.stripMode ? 0 : 1
       width: root.cardWidth
-      height: Math.min(root.cardHeight, panel.height - panel.barClearance - panel.effectiveCardTop)
+      height: Math.min(root.cardHeight, panel.height - Style.gapsOut - panel.effectiveCardTop)
       radius: root.cornerRadius
-      anchors.left: parent.left
-      anchors.leftMargin: 12 // matches Bar.qml's floatMargin so the popup lines up with the bar
+      x: root.dropdownMode
+        ? Math.max(Style.gapsOut, Math.min(root.anchorX, panel.width - width - Style.gapsOut))
+        : Style.gapsOut
       y: panel.effectiveCardTop
       color: root.background
       borderSpec: root.borderSpec
       padding: root.contentMargin
 
-      MouseArea { anchors.fill: parent; onClicked: {} }
+      MouseArea { anchors.fill: parent; enabled: !root.stripMode; onClicked: {} }
 
       Item {
         id: keyCatcher
@@ -1082,6 +1171,21 @@ Item {
         Keys.onPressed: function(event) {
           if (root.deleteConfirmOpen) {
             if (deleteConfirm.handleKey(event)) event.accepted = true
+            return
+          }
+
+          if (root.stripMode) {
+            if (event.key === Qt.Key_Left || event.key === Qt.Key_Backtab) root.stripMove(-1)
+            else if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab) root.stripMove(1)
+            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Down) root.stripOpen()
+            else if (event.key === Qt.Key_Escape) root.cancel()
+            event.accepted = true
+            return
+          }
+
+          if (event.key === Qt.Key_Escape && root.dropdownMode && root.stripReturn && !root.filterText) {
+            root.stripBack()
+            event.accepted = true
             return
           }
 
@@ -1152,6 +1256,7 @@ Item {
         spacing: root.contentSpacing
 
         Rectangle {
+          visible: root.headerHeight > 0
           width: parent.width
           height: root.headerHeight
           radius: root.cornerRadius
@@ -1166,7 +1271,7 @@ Item {
             color: root.foreground
             opacity: root.filterText ? 1 : 0.58
             font.family: root.fontFamily
-            font.pixelSize: Style.font.heading
+            font.pixelSize: root.compact ? Style.font.body : Style.font.heading
             elide: Text.ElideRight
           }
 
@@ -1175,6 +1280,15 @@ Item {
         Item {
           width: parent.width
           height: root.visibleRowsHeight
+
+          Row {
+            anchors.fill: parent
+            spacing: root.contentSpacing
+
+          Item {
+            id: listPane
+            width: root.showPreview ? parent.width - root.previewPaneWidth - root.contentSpacing - previewDivider.width : parent.width
+            height: parent.height
 
           ListView {
             id: resultList
@@ -1222,7 +1336,7 @@ Item {
 
               readonly property bool hasCursor: root.cursorActive && row.index === root.selectedIndex
               readonly property bool isApp: row.kind === "app"
-              readonly property bool hasIcon: row.icon.length > 0 || row.isApp
+              readonly property bool hasIcon: !root.compact && (row.icon.length > 0 || row.isApp)
 
               width: ListView.view.width
               height: root.rowHeightForDetail(row.detail)
@@ -1259,7 +1373,7 @@ Item {
 
               Image {
                 id: appIconImage
-                visible: row.isApp
+                visible: row.isApp && !root.compact
                 width: Style.font.iconLarge
                 height: Style.font.iconLarge
                 fillMode: Image.PreserveAspectFit
@@ -1277,7 +1391,7 @@ Item {
               Column {
                 id: contentColumn
                 anchors.left: row.hasIcon ? iconText.right : parent.left
-                anchors.leftMargin: row.hasIcon ? Style.space(6) : root.rowReservedBorderLeft + Style.space(18)
+                anchors.leftMargin: row.hasIcon ? Style.space(6) : root.rowReservedBorderLeft + (root.compact ? Style.space(10) : Style.space(18))
                 anchors.right: trail.left
                 anchors.rightMargin: Style.space(6)
                 anchors.verticalCenter: parent.verticalCenter
@@ -1290,8 +1404,8 @@ Item {
                   text: row.label
                   color: row.hasCursor ? root.selectedText : root.foreground
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.heading
-                  font.weight: Font.Medium
+                  font.pixelSize: root.compact ? Style.font.body : Style.font.heading
+                  font.weight: root.compact ? Font.Normal : Font.Medium
                   elide: Text.ElideRight
                 }
 
@@ -1333,7 +1447,7 @@ Item {
                   color: row.hasCursor ? root.selectedText : root.foreground
                   opacity: row.kind === "menu" || row.kind === "link" ? 0.36 : 0
                   font.family: root.fontFamily
-                  font.pixelSize: Style.font.heading
+                  font.pixelSize: root.compact ? Style.font.body : Style.font.heading
                   font.weight: Font.Normal
                   anchors.verticalCenter: parent.verticalCenter
                 }
@@ -1401,7 +1515,9 @@ Item {
             spacing: Style.space(8)
             visible: displayModel.count === 0 && root.mode !== "input"
 
+            // Compact: one small line that fits the dropdown, no big icon.
             Text {
+              visible: !root.compact
               text: "󰈉"
               color: root.selectedText
               opacity: 0.8
@@ -1417,11 +1533,70 @@ Item {
               color: root.foreground
               opacity: 0.7
               font.family: root.fontFamily
-              font.pixelSize: Style.font.title
+              font.pixelSize: root.compact ? Style.font.bodySmall : Style.font.title
               horizontalAlignment: Text.AlignHCenter
-              width: Style.space(320)
+              elide: Text.ElideRight
+              width: root.compact ? listPane.width : Style.space(320)
             }
           }
+
+          } // listPane
+
+          Rectangle {
+            id: previewDivider
+            visible: root.showPreview
+            width: root.showPreview ? Style.spacing.hairline : 0
+            height: parent.height
+            color: Util.alpha(root.foreground, 0.15)
+          }
+
+          Item {
+            id: previewPane
+            visible: root.showPreview
+            width: root.showPreview ? root.previewPaneWidth : 0
+            height: parent.height
+            clip: true
+
+            Column {
+              anchors.fill: parent
+              anchors.margins: Style.space(4)
+              spacing: root.rowSpacing
+
+              Repeater {
+                model: root.previewRows
+
+                Row {
+                  width: previewPane.width - Style.space(8)
+                  spacing: Style.space(6)
+                  required property var modelData
+
+                  Text {
+                    textFormat: Text.PlainText
+                    visible: text.length > 0
+                    text: modelData.icon || ""
+                    color: root.foreground
+                    opacity: 0.75
+                    font.family: modelData.iconFont && modelData.iconFont.length > 0 ? modelData.iconFont : root.fontFamily
+                    font.pixelSize: Style.font.body
+                    width: Style.space(18)
+                  }
+
+                  Text {
+                    textFormat: Text.PlainText
+                    text: modelData.label || ""
+                    color: root.foreground
+                    opacity: 0.85
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.bodySmall
+                    elide: Text.ElideRight
+                    width: parent.width - Style.space(24)
+                  }
+                }
+              }
+            }
+          }
+
+          } // Row
         }
 
         Item {

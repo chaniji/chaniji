@@ -3,10 +3,14 @@
     "centerAnchor": "omarchy.clock",
     "id": "chan.bar",
     "layout": {
-      "center": [],
+      "center": [
+        {
+          "id": "chan.menustrip"
+        }
+      ],
       "left": [
         {
-          "id": "omarchy.menu"
+          "id": "chan.menu"
         },
         {
           "id": "chan.workspaces"
@@ -37,7 +41,7 @@
       ]
     },
     "position": "top",
-    "transparent": false
+    "transparent": true
   },
   "idle": {
     "lock": 300,
@@ -48,5 +52,11 @@
       "id": "chan.sunclock"
     }
   ],
-  "version": 1
+  "version": 1,
+  "disabledPlugins": [
+    "omarchy.menu"
+  ],
+  "cloneSourceRestores": [
+    "chan.menu"
+  ]
 }

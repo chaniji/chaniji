@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "chan.menustrip",
+  "name": "My menu strip",
+  "version": "1.0.0",
+  "author": "chan",
+  "description": "Omarchy menu groups as a row in the bar",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "MenuStrip.qml"
+  },
+  "barWidget": {
+    "displayName": "My menu strip",
+    "description": "Omarchy menu groups as a row in the bar",
+    "category": "Compositor",
+    "allowMultiple": false
+  }
+}

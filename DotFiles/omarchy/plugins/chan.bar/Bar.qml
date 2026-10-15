@@ -1423,7 +1423,8 @@ Item {
       Item {
         anchors.fill: parent
 
-        CenterModules { anchors.fill: parent }
+        // Center entries are drawn by menuStrip below, so this list stays empty.
+        CenterModules { anchors.fill: parent; entries: [] }
 
         Island {
           visible: leftModules.visible
@@ -1449,9 +1450,63 @@ Item {
           width: rightModules.width + Style.space(8) * 2
         }
 
-        // Sits right after the left modules instead of at the right screen edge.
+        // Sits right after the menu strip (or the left modules if the strip is empty).
         RightModules {
           id: rightModules
+          x: menuStrip.visible
+            ? menuStrip.x + menuStrip.width + Style.space(8) + Style.space(12)
+            : leftModules.x + leftModules.width + Style.space(12) + Style.space(8)
+          anchors.verticalCenter: parent.verticalCenter
+        }
+
+        // Same outline as the right island.
+        Island {
+          visible: menuStrip.visible
+          x: menuStrip.x - Style.space(8)
+          width: menuStrip.width + Style.space(8) * 2
+        }
+
+        // Name of the focused app, outlined, in the top-right corner.
+        Item {
+          id: activeApp
+          readonly property var toplevel: ToplevelManager.activeToplevel
+          readonly property string appId: toplevel ? String(toplevel.appId || "") : ""
+          readonly property string name: {
+            if (!appId) return ""
+            var entry = DesktopEntries.heuristicLookup ? DesktopEntries.heuristicLookup(appId) : DesktopEntries.byId(appId)
+            if (entry && entry.name) return entry.name
+            var last = appId.split(".").pop()
+            return last.charAt(0).toUpperCase() + last.slice(1)
+          }
+          visible: name !== ""
+          width: Math.min(activeAppLabel.implicitWidth, Style.space(200))
+          height: parent.height
+          x: parent.width + root.floatMargin - Style.space(12) - Style.space(8) - width
+
+          Text {
+            id: activeAppLabel
+            textFormat: Text.PlainText
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width
+            text: activeApp.name
+            color: root.barForeground
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.body
+            elide: Text.ElideRight
+          }
+        }
+
+        Island {
+          visible: activeApp.visible
+          x: activeApp.x - Style.space(8)
+          width: activeApp.width + Style.space(8) * 2
+        }
+
+        // Center entries (the menu strip) sit right after the left modules.
+        ModuleList {
+          id: menuStrip
+          entries: root.layoutEntries("center")
+          region: "center"
           x: leftModules.x + leftModules.width + Style.space(12) + Style.space(8)
           anchors.verticalCenter: parent.verticalCenter
         }

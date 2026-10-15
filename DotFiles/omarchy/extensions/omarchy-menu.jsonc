@@ -38,4 +38,17 @@
 
   // CRT screen effect on/off under Trigger -> CRT Effect
   "trigger.crt": {"icon":"󰟴","label":"CRT Effect","checked":"hyprctl getoption decoration:screen_shader | grep -q crt.frag","action":"~/.local/bin/crt-toggle"},
+
+  // Packages group for the bar strip: links to Install, Remove, Update.
+  "packages": {"icon":"󰏗","label":"Packages"},
+  "packages.install": {"icon":"󰉉","label":"Install","target":"install"},
+  "packages.remove": {"icon":"󰭌","label":"Remove","target":"remove"},
+  "packages.update": {"icon":"","label":"Update","target":"update"},
+
+  // Omarchy group for the bar strip: links to Style, Setup, Trigger, Learn.
+  "omarchy": {"icon":"","label":"Omarchy"},
+  "omarchy.style": {"icon":"","label":"Style","target":"style"},
+  "omarchy.setup": {"icon":"","label":"Setup","target":"setup"},
+  "omarchy.trigger": {"icon":"󱓞","label":"Trigger","target":"trigger"},
+  "omarchy.learn": {"icon":"󰧑","label":"Learn","target":"learn"},
 }

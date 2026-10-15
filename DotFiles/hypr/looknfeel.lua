@@ -59,3 +59,6 @@ hl.config({
     rounding_power = 3,
   },
 })
+
+-- Blur behind the menu card. ignore_alpha 0.6 skips the 0.5 scrim, so only the card (0.72) blurs.
+hl.layer_rule({ match = { namespace = "^omarchy-menu$" }, blur = true, ignore_alpha = 0.6 })

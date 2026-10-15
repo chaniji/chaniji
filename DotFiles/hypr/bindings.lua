@@ -33,3 +33,7 @@ o.bind("SUPER + ALT + SHIFT + F", "File manager (cwd)", 'omarchy-launch-tui yazi
 -- o.bind("SUPER + SHIFT + S", nil, "omarchy-capture-screenshot")
 -- o.bind("SUPER + H", nil, "voxtype record toggle")
 -- o.bind("SUPER + PERIOD", nil, "omarchy-shell shell toggle omarchy.emojis")
+
+-- Super+Space highlights the menu strip in the bar (chan.menustrip) instead of a popup.
+hl.unbind("SUPER + SPACE")
+o.bind("SUPER + SPACE", "Menu strip", "omarchy-shell chan.menustrip focus")
