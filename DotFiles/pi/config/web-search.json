@@ -1,0 +1,7 @@
+{
+  "provider": "duckduckgo",
+  "fetchRouting": {
+    "providers": ["http", "jina"],
+    "allowRemoteHostedProviders": true
+  }
+}

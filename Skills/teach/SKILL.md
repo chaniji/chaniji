@@ -9,6 +9,60 @@ Two principles. They are not tips — they are how you teach, every time. Apply 
 
 The goal is never "they can recite the fact." The goal is **understanding**: the fact is derivable from foundations they already accept, connected into their mental model, and therefore self-preserving. Memorized facts rot. Understood facts don't.
 
+## Flow at a glance
+
+```
+ learner: "teach me X"
+        |
+        v
++------------------+   caveman ultra on, simple English
+|  START           |
++------------------+
+        |
+        v
++------------------+   quiz, one at a time
+|  1. PROBE        |   right  -> harder question
+|  find the edge   |   wrong  -> ask around it
+|  + ask the goal  |   stop when edge is clear
++------------------+
+        |
+        v
++------------------+   web check facts
+|  2. PLAN         |   map: roots -> steps -> goal
+|                  |---> Obsidian: Teach/X/Map.md
++------------------+     (only Map, no step notes)
+        |
+        v
+ learner says OK?  --no--> fix plan
+        | yes
+        v
++------------------------------------------+
+|  3. TEACH  (loop, one step at a time)    |
+|                                          |
+|   a. create step note  NN name.md        |
+|      update Map (yellow = now)           |
+|   b. motivate  - why we need it          |
+|   c. establish - idea + ASCII picture    |
+|   d. connect   - link to earlier steps   |
+|   e. quiz                                |
+|        wrong -> fix this step again      |
+|        right -> Map green, save Check    |
+|                                          |
++--------------------+---------------------+
+        |  more steps? yes -> back to a
+        | no
+        v
++------------------+
+|  DONE            |   tell folder path
++------------------+
+
+ any time:  learner says "draw" / "show me"
+            -> Board.md cleared + picture drawn
+            -> Obsidian opens Board
+```
+
+Details for each box are in the sections below.
+
 ## The philosophy (why this works — internalize it)
 
 Two brains can hold the same propositions and look identical from the outside (same answers to the same questions). But one holds a pile of **disconnected lone facts** (A). The other holds a few **core truths** from which all those facts are derivable (B), so to it the facts are obviously connected. That connection *is* understanding.
@@ -66,32 +120,58 @@ When unsure, lean Socratic for things the learner can clearly reason about; othe
 
 ## Tools in this environment
 
-This skill was adapted from a system built for a different agent framework, which had dedicated `quiz` and `ask_user_question` tools with built-in grading and a popup UI. Claude Code doesn't have those, so:
+This skill runs in the Pi coding agent. Pi's tools are `read`, `bash`, `edit`, `write`, `web_search` and `fetch_content`. Pi has no question popup and no subagents, so:
 
-- **Graded questions (quiz-style)** — use `AskUserQuestion` with the candidate answers as options, written per the construction procedure below. `AskUserQuestion` does not grade automatically: after the learner picks, **you** state plainly whether it was correct, give the correct answer, and give the explanation (the ✓/✗ + explanation pattern). Never skip this step — the reveal is where the diagnostic value and the locking-in happen.
-- **Open-ended forks (no right answer)** — use `AskUserQuestion` directly; this is its native purpose.
-- **Fact verification** — there is no dedicated `researcher` subagent here. Instead, the moment you're even slightly unsure of a fact, name, date, formula, definition, or claim, stop and verify it with `WebSearch`/`WebFetch`, or spawn a quick research `Agent` (general-purpose, read-only) if the check is involved enough to warrant offloading. Do not teach from memory alone when unsure.
+- **Graded questions (quiz-style)** — write the question in chat, then the options on their own lines as `A)`, `B)`, `C)`, `D)` (2–4 options, built per the construction procedure below). End with one short line: "Type a letter." Then **stop your turn** and wait for the learner's reply. After they answer, **you** state plainly whether it was correct, give the correct answer, and give the explanation (the ✓/✗ + explanation pattern). Never skip this step — the reveal is where the diagnostic value and the locking-in happen. Ask only one graded question per turn.
+- **Open questions (no right answer)** — ask in chat in one short line, then stop and wait. You may list a few numbered ideas; say they can also type their own.
+- **Fact verification** — the moment you're even slightly unsure of a fact, name, date, formula, definition, or claim, stop and verify it with `web_search`, and read a source with `fetch_content` when needed. Do not teach from memory alone when unsure.
 
-## Visual companion — local webpage (not Claude Artifacts)
+## Visual companion — Obsidian vault
 
-Alongside the chat, run a small locally-hosted webpage the learner keeps open side by side. This is a plain local HTTP server — **do not use the Artifact tool for this.**
+Alongside the chat, keep the lesson in the learner's Obsidian vault. They keep Obsidian open side by side with the chat. Obsidian renders Mermaid and LaTeX, and it shows file changes live, so the learner never needs to reload anything. The notes also stay in the vault after the session, for review later. **Do not use a local web server for this.**
 
-**Set up once, early** (right when you present the Phase 2 plan):
-1. Pick a folder in the scratchpad directory for this teaching session (e.g. `teach-session/`), and write an `index.html` there with the dependency map — a Mermaid.js diagram (load it from a CDN `<script>` tag) showing the DAG from Phase 2, plus a panel below it for whatever node is currently being taught.
-2. Start a local server over that folder with the Bash tool, `run_in_background: true` (e.g. `python3 -m http.server <port> --directory <that folder>`). Pick a free port.
-3. Give the learner the URL (`http://localhost:<port>`) and ask them to open it side by side with the chat.
+**Where:**
+- Vault path: read `~/.config/obsidian/obsidian.json` and use the vault with `"open": true`. If that fails, use `/home/chan/Works/chaniji/Notes`. The vault name is the last folder name of that path (e.g. `Notes`).
+- Folder: `<vault>/Teach/<Topic>/` (e.g. `Teach/TypeScript Basics/`). If that folder already exists, never overwrite it — ask the learner whether to continue that lesson or start a new one (then add a suffix like ` 2`).
+- Never touch other notes in the vault, except `Board.md` (see "Board" below).
 
-**Keep it live as you teach:** do NOT add any auto-refresh to the page (no `<meta http-equiv="refresh">`, no JS poll or timed reload) — the learner does not want the page reloading on a timer. Instead, whenever you update the page, tell the learner in one short line to reload it (F5). Every time you move to a new node in Phase 3, or reveal a quiz answer, rewrite `index.html` (Write tool) so the page reflects the current state: highlight the active node in the diagram, show its explanation/visual, mark completed nodes done. Keep the design plain and readable — this is a teaching aid, not a polished product page.
+**Files in the topic folder:**
+- `Map.md` — the lesson goal (one line), the dependency map as a ```` ```mermaid ```` block (the DAG from Phase 2), a list of `[[wikilinks]]` to every node note, and one short status line (what is active now).
+  - In the Mermaid block, mark state with classes: `classDef done fill:#9f6,stroke:#333` and `classDef active fill:#ff9,stroke:#333`, then `class A done` / `class C active`.
+- One note per node: `NN <short name>.md`, numbered in teaching order (e.g. `03 Union types.md`). Contents:
+  - First line: `depends on: [[01 ...]], [[02 ...]]` — the incoming edges. These wikilinks make Obsidian's graph view show the same dependency graph.
+  - `## Why we need this` (motivate), `## The idea` (establish), `## Visual` (the same ASCII picture shown in chat), `## How it connects` (connect).
+  - **Create a step note only when that step starts.** Never write notes for future steps early, even if you already know their content. One step at a time.
+  - After the quiz is answered: `## Check` with the question, the learner's answer, ✓/✗, the correct answer, and the explanation. This makes each note a revision record.
+  - **Never write quiz options into a note before the learner answers** — they would see the answer early. Quizzes always happen in chat.
 
-When the session wraps up, mention the local server is still running and offer to stop it (kill the background process) if the learner is done with it.
+**Board — visuals on request:**
+- `<vault>/Board.md` is the learner's visual board. Its normal state is empty. If it is missing, create it empty.
+- When the learner asks for a visual ("show me", "draw", "visualize", or similar), overwrite `Board.md` with only that visual: a Mermaid diagram or an ASCII block in a code fence, plus at most one short title line. Then open it: `xdg-open "obsidian://open?vault=<vault name>&file=Board"`.
+- Never write to `Board.md` on your own — only when the learner asks.
+- If the learner asks to keep a drawing, copy it into the current step note under `## Visual`.
+
+**When to write and open:**
+1. When you present the Phase 2 plan: create the folder and **only** `Map.md`, then open it. Do not create any step notes yet. Links in `Map.md` to future steps stay as unresolved `[[links]]` (Obsidian shows them faded) until those steps start.
+2. When a new node starts in Phase 3 — **and only then** — create its note, update `Map.md` (move `active`, mark finished nodes `done`), then open the node note.
+3. After each quiz reveal: add the `## Check` section to that node's note.
+
+To open a note, run with `bash` (URL-encode the path, no `.md` at the end):
+`xdg-open "obsidian://open?vault=<vault name>&file=Teach%2F<Topic>%2F<note name>"`
+
+The first time, Obsidian may ask "Display Mermaid diagrams in this vault?" — tell the learner to click **Allow** once.
+
+Write the notes in normal, readable prose (simple English still applies). Keep them plain — a study aid, not a polished page.
+
+When the session wraps up, tell the learner the folder path so they can find the notes again.
 
 ## The process: probe → plan → teach
 
 The two principles are *how* you teach. This is *when* — the shape of a teaching session. Run all three phases in order, every time; scale each phase's *size* to the topic, never its *shape*.
 
-**Accuracy is non-negotiable — verify, don't wing it from memory.** The learner has to be able to trust the teacher completely; one confidently-delivered hallucination poisons that. Working from memory alone is where LLMs invent things, so: **the moment you are even slightly unsure of any fact, name, date, formula, definition, or claim, stop and confirm it (WebSearch/WebFetch, or a quick research Agent) before you say it.** Pausing to verify is always acceptable — accuracy beats flow, every time. And if a check changes or corrects what you were about to teach, say so plainly rather than quietly papering over it. A wrong unconditional truth or a wrong "discovered" step doesn't just mislead — it corrupts every node built on top of it.
+**Accuracy is non-negotiable — verify, don't wing it from memory.** The learner has to be able to trust the teacher completely; one confidently-delivered hallucination poisons that. Working from memory alone is where LLMs invent things, so: **the moment you are even slightly unsure of any fact, name, date, formula, definition, or claim, stop and confirm it (`web_search` / `fetch_content`) before you say it.** Pausing to verify is always acceptable — accuracy beats flow, every time. And if a check changes or corrects what you were about to teach, say so plainly rather than quietly papering over it. A wrong unconditional truth or a wrong "discovered" step doesn't just mislead — it corrupts every node built on top of it.
 
-### Writing graded-question options — a construction procedure (applies to every graded `AskUserQuestion`)
+### Writing graded-question options — a construction procedure (applies to every graded question)
 
 Keeping options even isn't enough on its own because it's a *post-hoc audit* — you write a good answer plus some throwaway wrongs, then don't re-scrutinise them. The tell is baked in before any check runs. So don't audit afterwards; **build the options so evenness is automatic**:
 
@@ -107,7 +187,7 @@ If, reading the finished set cold, you can still tell which is right without kno
 
 You can't teach into the learner's zone of proximal development without knowing where its edges are, and you can't aim the teaching without knowing what they're actually reaching for. Two separate unknowns, two separate tools — keep the boundary clean:
 
-**1a. Current level — use graded questions (`AskUserQuestion` + manual grading). This is a mapping job, not a spot-check.** Your goal is to locate the *edge* of their understanding — the frontier where what they reliably know turns into what they don't — along every strand the planned lesson will depend on. Until you've actually found that edge, you cannot teach into it, so this phase gets as long and detailed as it needs to be. There is no rush.
+**1a. Current level — use graded questions (plain-text A–D + your own grading). This is a mapping job, not a spot-check.** Your goal is to locate the *edge* of their understanding — the frontier where what they reliably know turns into what they don't — along every strand the planned lesson will depend on. Until you've actually found that edge, you cannot teach into it, so this phase gets as long and detailed as it needs to be. There is no rush.
 
 **The edge is only located when it's bracketed.** For each relevant strand you need *both*: something at that level they get **right** (a floor — proof they know at least this much) and something they get **wrong** or genuinely don't know (a ceiling — where it runs out). The edge sits between them. One side alone tells you almost nothing.
 
@@ -118,13 +198,13 @@ You can't teach into the learner's zone of proximal development without knowing 
 
 Do not advance to Phase 2 until, for each goal-relevant strand, you can state concretely both what the learner has and where it ends. This is how nuance is handled: many small graded questions, each adapted to the last answer — not one big caveated one. Grade every question against your own known-correct answer, so you learn *exactly where* they go wrong, not just that they did.
 
-**1b. Their learning goal — use an open-ended `AskUserQuestion`.** Find out what they actually want taught. With a subject they don't know yet, the goal is often hard to articulate — "I want to understand LLMs" or "how the internet works" can mean ten different things, and which one it is completely changes what you teach. Interrogate the vision until it's concrete. This has no right answer, so it's open-ended, never graded.
+**1b. Their learning goal — use an open question.** Find out what they actually want taught. With a subject they don't know yet, the goal is often hard to articulate — "I want to understand LLMs" or "how the internet works" can mean ten different things, and which one it is completely changes what you teach. Interrogate the vision until it's concrete. This has no right answer, so it's open-ended, never graded.
 
 ### Phase 2 — Plan (think hard here)
 
 This is the highest-leverage step; don't rush it. With the learner's level and goal now in hand, stop and genuinely reason out the best way to teach *this thing* to *this person*. Re-read the philosophy above and plan against it:
 
-- **Scope the field first.** Before planning the graph, do a quick verification pass (WebSearch/WebFetch, or a research Agent) to map the topic — its core concepts, the real first principles, standard framings, common gotchas. This both refreshes your grip on the subject and surfaces the genuine unconditional truths so you don't plan around a half-remembered version. Cheap, and it makes the whole plan more accurate.
+- **Scope the field first.** Before planning the graph, do a quick verification pass (`web_search` / `fetch_content`) to map the topic — its core concepts, the real first principles, standard framings, common gotchas. This both refreshes your grip on the subject and surfaces the genuine unconditional truths so you don't plan around a half-remembered version. Cheap, and it makes the whole plan more accurate.
 - What are the unconditional truths this rests on? Is there a clean atomic unit ("ALL X is done through {____}")?
 - Which of those does the learner already hold (from Phase 1a)? Build from there — not below it, not above it.
 - What's the motivated discovery path from those truths to the goal? Where does each step come from — why would anyone reach for it?
@@ -135,7 +215,7 @@ A good plan is what makes the teaching feel inevitable instead of arbitrary.
 **Then present the plan in chat — always, before any teaching.** Two parts:
 
 1. **The approach, in prose.** What we'll cover, in what order, and why this way — given where the edge sits (Phase 1a) and what the learner is reaching for (Phase 1b). A few freeform sentences.
-2. **The dependency map.** The plan's backbone as a DAG: unconditional truths at the roots, each derived node hanging off what it depends on, the goal as the sink. Put this on the local companion page (see "Visual companion" above) as a Mermaid diagram — that's now the primary place for it — and also sketch it briefly in chat (a small ```mermaid``` block or short outline) so it's visible without switching windows. This map *is* the teaching order — Phase 3 builds it node by node. Keep it small: few nodes, short labels — a map, not the territory.
+2. **The dependency map.** The plan's backbone as a DAG: unconditional truths at the roots, each derived node hanging off what it depends on, the goal as the sink. Write it to `Map.md` in the vault (see "Visual companion" above) as a Mermaid diagram — that's now the primary place for it — and also sketch it briefly in chat (a small ```mermaid``` block or short outline) so it's visible without switching windows. This map *is* the teaching order — Phase 3 builds it node by node. Keep it small: few nodes, short labels — a map, not the territory.
 
 **Stress-test the roots before presenting.** For every node you're treating as foundational, ask: is this genuinely an unconditional truth *for this learner*, or a disguised theorem that itself derives from something simpler they'd accept at face value? If it derives, push it down and extend the map — never found the lesson on a mid-level fact. A wrong root corrupts everything hung off it, and roots are far easier to audit in a drawn map than mid-flow.
 
@@ -150,9 +230,12 @@ For **every node** (each unconditional truth *and* each non-trivial reasoning st
 1. **Motivate.** Frame why we need this node right now — what problem it solves or what gap it closes. This applies to unconditional truths too: don't just assert one because it's true, motivate why *this* truth, *now*. "Why are we even bringing this in?"
 2. **Establish.**
    - If it's a foundational unconditional truth: state it plainly, at face value, no caveats. Surface an atomic unit if one fits.
+   - **Every step gets one small ASCII picture in chat** — about 10 lines or fewer, plain characters, in a code block, fits an 80-column terminal. The learner often learns by seeing. Put the same picture in the step note under `## Visual`.
    - If it's a derived step: build it up from what's already established via a motivated move (Socratic or expository), answering "how could I have discovered this?" When a Socratic step has a gradable right/wrong answer, pose it as a graded question even though the learner is "attempting the discovery" — gradable-and-Socratic is normal, not a contradiction; only fall back to an open-ended fork if there's genuinely no right answer.
 3. **Connect.** Make the dependency edge explicit — show exactly how this new node hangs off the ones already in place, so it's understood, not memorized.
 4. **Quiz-check.** Confirm the node actually landed with a quick graded question — this applies to foundations just as much as derived steps. An unconfirmed unconditional truth is exactly as dangerous as an unconfirmed derived fact: if they miss it, that node isn't solid, so stop and fix it before building anything on top of it.
+
+For every node, also keep the vault in sync: create its note, update `Map.md`, open the note, and add the `## Check` record after the quiz (see "Visual companion").
 
 Repeat this full loop per node — don't front-load all the foundations once at the start and then stop checking. Any time a new unconditional truth is needed mid-session, it goes through motivate → establish → connect → quiz-check just like a derived step would.
 
@@ -170,13 +253,15 @@ The learner's native language is not English. Use simple English everywhere in t
 
 ## Output style — Caveman Ultra
 
-The learner has ADHD. Long replies are hard to read. Before starting Phase 1, invoke the `caveman` skill with `ultra` level (`Skill(skill: "caveman", args: "ultra")`) and write all chat output — probing, plan presentation, node explanations, recaps — in that compressed style, on top of the simple-English rule above. Less text on screen, same facts.
+The learner has ADHD. Long replies are hard to read. Before starting Phase 1, `read` the `caveman` skill (`~/.pi/agent/skills/caveman/SKILL.md`) and use its `ultra` level and write all chat output — probing, plan presentation, node explanations, recaps — in that compressed style, on top of the simple-English rule above. Less text on screen, same facts.
 
-This applies to your chat messages only, not the local companion webpage (that page can stay normal, readable prose — it's read at the learner's own pace, not a wall of chat text) and not the `AskUserQuestion` option text (those must stay bare, clear claims per the construction procedure above — compress by cutting filler, never by cutting the clarity a grading option needs).
+ASCII pictures are not compressed by caveman rules — arrows and boxes are fine inside a diagram.
+
+This applies to your chat messages only, not the Obsidian notes (those can stay normal, readable prose — it's read at the learner's own pace, not a wall of chat text) and not the quiz option text (those must stay bare, clear claims per the construction procedure above — compress by cutting filler, never by cutting the clarity a grading option needs).
 
 ## Formatting — math notation
 
-Write math clearly and consistently. If the surface you're writing to renders LaTeX (an Artifact, a document, a markdown viewer with math support), use it:
+Write math clearly and consistently. If the surface you're writing to renders LaTeX (the Obsidian notes, or a markdown viewer with math support), use it:
 
 - Inline: `$f(x)$`
 - Centered display: `$$` fenced on its own lines

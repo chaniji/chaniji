@@ -1,0 +1,14 @@
+{
+  "theme": "omarchy-system",
+  "lastChangelogVersion": "1.2.0",
+  "defaultProvider": "claude-bridge",
+  "defaultModel": "claude-sonnet-5",
+  "packages": [
+    "npm:pi-claude-bridge",
+    "npm:pi-web-access"
+  ],
+  "tuiMode": "regular",
+  "quietStartup": "header",
+  "showHardwareCursor": true,
+  "enableSkillCommands": true
+}
