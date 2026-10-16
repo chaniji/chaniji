@@ -1,0 +1,6 @@
+/* Friction: the add-ons page (about:addons) shows empty. */
+@-moz-document url-prefix("about:addons") {
+  body {
+    display: none !important;
+  }
+}

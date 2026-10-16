@@ -1,0 +1,21 @@
+/* Extension menu: show only Video DownloadHelper. Others keep running. */
+:is(#unified-extensions-area, #overflowed-extensions-list, .unified-extensions-list)
+  > .unified-extensions-item:not(
+    [data-extensionid="{b9db16a4-6edc-47ec-a1f4-b86292ed211d}"],
+    [extension-id="{b9db16a4-6edc-47ec-a1f4-b86292ed211d}"]
+  ) {
+  display: none !important;
+}
+
+/* Friction: hide every link that opens the add-ons page. */
+#zen-site-data-manage-addons,
+#zen-site-data-new-addon-button-container,
+#unified-extensions-manage-extensions,
+#appMenu-extensions-themes-button,
+#menu_openAddons,
+.unified-extensions-context-menu-manage-extension,
+.unified-extensions-context-menu-remove-extension,
+.customize-context-manageExtension,
+.customize-context-removeExtension {
+  display: none !important;
+}
