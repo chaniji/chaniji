@@ -28,7 +28,7 @@
 	autoupdate = true        # Apply stored conflict resolutions automatically
 [user]
 	name = chaniji
-	email = chaniji19@gmail.com
+	email = therunningwolf@proton.me
 [credential "https://github.com"]
 	helper = 
 	helper = !/home/chan/.local/share/mise/installs/gh/2.102.0/gh_2.102.0_linux_amd64/bin/gh auth git-credential
