@@ -1,0 +1,15 @@
+{
+  "systemPromptColor": "#e06c75",
+  "instructionFilesColor": "#c678dd",
+  "skillsColor": "#e5c07b",
+  "builtInToolsColor": "#d19a66",
+  "customToolsColor": "#98c379",
+  "mcpToolsColor": "#56b6c2",
+  "userMessagesColor": "#61afef",
+  "assistantMessagesColor": "#ffffff",
+  "assistantThinkingColor": "#ff79c6",
+  "toolCallsColor": "#b0855a",
+  "toolOutputColor": "#8a8fd8",
+  "extensionsColor": "#c9a0ff",
+  "compactedDataColor": "#6b8e23"
+}

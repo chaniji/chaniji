@@ -1,14 +1,21 @@
 {
   "theme": "omarchy-system",
-  "lastChangelogVersion": "1.2.0",
-  "defaultProvider": "claude-bridge",
-  "defaultModel": "claude-sonnet-5",
+  "lastChangelogVersion": "1.3.0",
+  "defaultProvider": "ollama-cloud",
+  "defaultModel": "gpt-oss:120b",
   "packages": [
     "npm:pi-claude-bridge",
-    "npm:pi-web-access"
+    "npm:pi-web-access",
+    "npm:pi-ollama-cloud",
+    {
+      "source": "npm:pi-context-view",
+      "extensions": []
+    },
+    "npm:pi-hermes-memory"
   ],
-  "tuiMode": "regular",
+  "tuiMode": "fullscreen",
   "quietStartup": "header",
   "showHardwareCursor": true,
-  "enableSkillCommands": true
+  "enableSkillCommands": true,
+  "hideThinkingBlock": true
 }

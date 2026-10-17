@@ -1,0 +1,9 @@
+DuckDuckGo No-AI Search	noai@duckduckgo.com	https://addons.mozilla.org/firefox/addon/noai@duckduckgo.com
+Hoppscotch Browser Extension	postwoman-firefox@postwoman.io	https://addons.mozilla.org/firefox/addon/postwoman-firefox@postwoman.io
+Old Reddit Redirect	{9063c2e9-e07c-4c2c-9646-cfe7ca8d0498}	https://addons.mozilla.org/firefox/addon/{9063c2e9-e07c-4c2c-9646-cfe7ca8d0498}
+PureBrowse	{a4ebe945-4ecd-4f8a-9c85-1a8babf18401}	https://addons.mozilla.org/firefox/addon/{a4ebe945-4ecd-4f8a-9c85-1a8babf18401}
+uBlock Origin	uBlock0@raymondhill.net	https://addons.mozilla.org/firefox/addon/uBlock0@raymondhill.net
+Unplug	unplug@unplug-extension	https://addons.mozilla.org/firefox/addon/unplug@unplug-extension
+Video Download Helper	{b9db16a4-6edc-47ec-a1f4-b86292ed211d}	https://addons.mozilla.org/firefox/addon/{b9db16a4-6edc-47ec-a1f4-b86292ed211d}
+Vimium	{d7742d87-e61d-4b78-b8a1-b469842139fa}	https://addons.mozilla.org/firefox/addon/{d7742d87-e61d-4b78-b8a1-b469842139fa}
+Youtube Shorts Blocker	{ad79954f-8f3e-452e-8767-56ef619ae566}	https://addons.mozilla.org/firefox/addon/{ad79954f-8f3e-452e-8767-56ef619ae566}

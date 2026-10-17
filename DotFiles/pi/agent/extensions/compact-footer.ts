@@ -12,6 +12,9 @@ import { join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth } from "@earendil-works/pi-tui";
 
+// false: hide the info line; only other extensions' status texts show (if any)
+const SHOW_INFO = false;
+
 // Same context files Pi itself loads from a folder
 const AGENT_FILES = ["AGENTS.override.md", "AGENTS.md", "AGENTS.MD", "CLAUDE.md", "CLAUDE.MD"];
 
@@ -65,6 +68,7 @@ export default function (pi: ExtensionAPI) {
 					const statuses = statusTexts(footerData.getExtensionStatuses()).filter(Boolean);
 					const right = statuses.length ? `   ${statuses.join("  ")}` : "";
 
+					if (!SHOW_INFO) return statuses.length ? [truncateToWidth(statuses.join("  "), width)] : [];
 					return [truncateToWidth(parts.join(dim(" · ")) + right, width)];
 				},
 			};

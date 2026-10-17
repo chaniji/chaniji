@@ -4,8 +4,12 @@
 
 
 - **Proton Mail**: therunningwolf@proton.me
-- GitHub
-- Pinterest
+- tumblr
+- GitHub || ollama
+  
+	  Gmail:-chaniji19@gmail.com
+  Notion and figma 
+  
 
 ## 💻 Odachi
 
