@@ -2,7 +2,7 @@
   "theme": "omarchy-system",
   "lastChangelogVersion": "1.3.0",
   "defaultProvider": "ollama-cloud",
-  "defaultModel": "gpt-oss:120b",
+  "defaultModel": "minimax-m3.1-flash",
   "packages": [
     "npm:pi-claude-bridge",
     "npm:pi-web-access",

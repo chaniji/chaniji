@@ -39,6 +39,9 @@
   // CRT screen effect on/off under Trigger -> CRT Effect
   "trigger.crt": {"icon":"󰟴","label":"CRT Effect","checked":"hyprctl getoption decoration:screen_shader | grep -q crt.frag","action":"~/.local/bin/crt-toggle"},
 
+  // Phone SSH connection under Trigger
+  "trigger.phonessh": {"icon":"","label":"Phone SSH","action":"omarchy-launch-or-focus-tui \"ssh -p 8022 u0_a704@192.168.1.30\""},
+
   // Packages group for the bar strip: links to Install, Remove, Update.
   "packages": {"icon":"󰏗","label":"Packages"},
   "packages.install": {"icon":"󰉉","label":"Install","target":"install"},
