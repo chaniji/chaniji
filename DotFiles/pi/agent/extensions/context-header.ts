@@ -11,19 +11,45 @@
  *     ● Skills .............. 485      ○ Free Space ......... 979k
  */
 
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
 import { Key, matchesKey } from "@earendil-works/pi-tui";
 
 const SRC = join(homedir(), ".pi/agent/npm/node_modules/pi-context-view/src");
 const GRID_ROWS = 3;
+// Same context files Pi itself loads from a folder
+const AGENT_FILES = ["AGENTS.override.md", "AGENTS.md", "AGENTS.MD", "CLAUDE.md", "CLAUDE.MD"];
 
 // biome-ignore lint: loaded at runtime from pi-context-view
 type Mod = any;
 
 function visibleWidth(text: string): number {
 	return text.replace(/\x1b\[[0-9;]*m/g, "").length;
+}
+
+function shortenPath(path: string): string {
+	const home = homedir();
+	return path.startsWith(home) ? `~${path.slice(home.length)}` : path;
+}
+
+// Current git branch from .git/HEAD, looking up from the folder; short hash when detached
+function gitBranch(cwd: string): string | undefined {
+	for (let dir = cwd; ; dir = dirname(dir)) {
+		const git = join(dir, ".git");
+		try {
+			// A worktree or submodule has a ".git" file pointing at the real git folder
+			const gitDir = statSync(git).isFile()
+				? readFileSync(git, "utf8").replace(/^gitdir:\s*/, "").trim()
+				: git;
+			const head = readFileSync(join(gitDir.startsWith("/") ? gitDir : join(dir, gitDir), "HEAD"), "utf8").trim();
+			return head.startsWith("ref: refs/heads/") ? head.slice(16) : head.slice(0, 7);
+		} catch {
+			// no git here: try the parent folder
+		}
+		if (dirname(dir) === dir) return undefined;
+	}
 }
 
 function percent(tokens: number, total: number): string {
@@ -86,12 +112,30 @@ export default function (pi: ExtensionAPI) {
 		const used: number = usage.reported?.tokens ?? usage.estimatedTokens;
 		const fmt: (n: number) => string = mod.formatTokens;
 
-		// Title row: name left, model and total right
-		const title = theme.fg("accent", theme.bold("Context Usage"));
+		// One box around title, list and grid, same edges as the book page:
+		// border at column 0 and width - 1, content from column 2 to width - 3
+		const border = (text: string) => theme.fg("border", text);
+		const content = Math.max(28, width - 4);
+		const side = (line: string) => `${border("│")} ${line}${" ".repeat(Math.max(0, content - visibleWidth(line)))} ${border("│")}`;
+
+		// Top border holds the title on the left, model and total on the right
+		// Context files in this folder show in the bottom-right corner: "◈ AGENTS.md · CLAUDE.md"
+		const found = AGENT_FILES.filter((name) => existsSync(join(ctx.cwd, name)));
+		const name = `${border("─ ")}${theme.fg("accent", theme.bold("Context Usage"))}${border(" ")}`;
 		const model = (ctx.model?.id ?? "").replace(/^claude-/, "");
-		const total = `${theme.fg("muted", model)}${theme.fg("dim", " · ")}${theme.fg("text", `${fmt(used)}/${fmt(window)} (${percent(used, window)})`)}`;
-		const gap = Math.max(1, width - visibleWidth(title) - visibleWidth(total));
-		const out = [title + " ".repeat(gap) + total];
+		const amount = `${fmt(used)}/${fmt(window)} (${percent(used, window)})`;
+		// Narrow terminal: drop pieces until the top border fits on one line, so it never wraps into the box
+		const totalChoices = [
+			` ${theme.fg("muted", model)}${theme.fg("dim", " · ")}${theme.fg("text", amount)}${border(" ─")}`,
+			` ${theme.fg("text", amount)}${border(" ─")}`,
+			` ${theme.fg("text", percent(used, window))}${border(" ─")}`,
+			"",
+		];
+		const title = name;
+		const total = totalChoices.find((t) => visibleWidth(title) + visibleWidth(t) + 1 <= content + 2) ?? "";
+		const fill = Math.max(0, content + 2 - visibleWidth(title) - visibleWidth(total));
+		// Empty first row: keeps the panel off the tmux status bar
+		const out = ["", border("╭") + title + border("─".repeat(fill)) + total + border("╮")];
 
 		// Every category, plus buffer and free space
 		const items: { id: string; label: string; tokens: number; dot: string }[] = usage.categories.map(
@@ -106,31 +150,33 @@ export default function (pi: ExtensionAPI) {
 			items.push({ id: mod.FREE_SPACE_CATEGORY_ID, label: "Free Space", tokens: free, dot: "○" });
 		}
 
-		// 2 columns, filled top to bottom
-		const columnWidth = Math.min(40, Math.max(14, Math.floor((width - 4) / 2)));
+		// 2 columns, filled top to bottom; the right column ends at the content edge
+		const columnWidth = Math.floor((content - 2) / 2);
+		const gutter = content - columnWidth * 2;
 		const marker = selecting ? 2 : 0;
+		const showPct = columnWidth >= 30;
 		const cell = (item: (typeof items)[number], index: number) => {
 			const isSelected = selecting && index === selected && index < selectableIds.length;
 			const prefix = !selecting ? "" : isSelected ? theme.fg("accent", "→ ") : "  ";
 			const color = mod.resolveCategoryColor(colors, item.id);
 			const value = `${fmt(item.tokens)}`.padStart(6);
-			const showPct = columnWidth >= 30;
 			const pct = showPct ? percent(item.tokens, window).padStart(6) : "";
-			const labelRoom = Math.max(4, columnWidth - 2 - marker - value.length - pct.length - 2);
-			const label = item.label.length > labelRoom - 2 ? `${item.label.slice(0, labelRoom - 3)}…` : item.label;
-			const dots = " " + ".".repeat(Math.max(1, labelRoom - label.length - 1));
-			return `${prefix}${mod.colorize(theme, color, item.dot)} ${theme.fg(isSelected ? "accent" : "text", label)}${theme.fg("dim", dots)} ${theme.fg("text", value)}${theme.fg("dim", pct)}`;
+			// Room for label plus leader dots: everything else in the cell is fixed width
+			const room = Math.max(6, columnWidth - marker - 2 - value.length - pct.length);
+			const label = item.label.length > room - 3 ? `${item.label.slice(0, room - 4)}…` : item.label;
+			const dots = ` ${".".repeat(Math.max(1, room - label.length - 2))} `;
+			return `${prefix}${mod.colorize(theme, color, item.dot)} ${theme.fg(isSelected ? "accent" : "text", label)}${theme.fg("dim", dots)}${theme.fg("text", value)}${theme.fg("dim", pct)}`;
 		};
 		const half = Math.ceil(items.length / 2);
 		for (let row = 0; row < half; row++) {
 			const left = cell(items[row], row);
 			const right = items[row + half] ? cell(items[row + half], row + half) : "";
-			const pad = " ".repeat(Math.max(1, columnWidth - visibleWidth(left)));
-			out.push(`  ${left}${pad}  ${right}`);
+			const pad = " ".repeat(Math.max(0, columnWidth - visibleWidth(left)) + gutter);
+			out.push(side(`${left}${right ? pad + right : ""}`));
 		}
 
-		// Grid under the list: full width, 3 rows of circles in category colors, in a box
-		const gridColumns = Math.max(4, Math.floor((width - 5) / 2));
+		// Grid under the list, in the same box after a divider: 3 rows of circles in category colors
+		const gridColumns = Math.max(4, Math.floor((content + 1) / 2));
 		const map = mod.buildUsageMap(usage, gridColumns, GRID_ROWS);
 		if (map) {
 			const glyph: Record<string, string> = { full: "●", partial: "◐", buffer: "◌", free: "○" };
@@ -138,19 +184,42 @@ export default function (pi: ExtensionAPI) {
 				buffer: mod.AUTO_COMPACT_BUFFER_CATEGORY_ID,
 				free: mod.FREE_SPACE_CATEGORY_ID,
 			};
-			const border = (text: string) => theme.fg("borderMuted", text);
-			const inner = map.columns * 2 + 1;
-			out.push(`  ${border(`╭${"─".repeat(inner)}╮`)}`);
+			out.push(border(`├${"─".repeat(content + 2)}┤`));
 			for (let row = 0; row < map.rows; row++) {
 				const cells = map.cells.slice(row * map.columns, (row + 1) * map.columns);
 				const drawn = cells.map((c: { categoryId?: string; fill: string }) => {
 					const color = mod.resolveCategoryColor(colors, c.categoryId ?? fallbackId[c.fill]);
 					return mod.colorize(theme, color, glyph[c.fill] ?? "○");
 				});
-				out.push(`  ${border("│")} ${drawn.join(" ")} ${border("│")}`);
+				out.push(side(drawn.join(" ")));
 			}
-			out.push(`  ${border(`╰${"─".repeat(inner)}╯`)}`);
 		}
+		// Bottom border: folder and git branch on the left, context files on the right.
+		// Narrow terminal: shorten the folder, then drop pieces until it fits on one line
+		const branch = gitBranch(ctx.cwd);
+		const fullPath = shortenPath(ctx.cwd);
+		const placeChoices = [
+			`${fullPath}${branch ? ` · ⎇ ${branch}` : ""}`,
+			`${basename(ctx.cwd) || fullPath}${branch ? ` · ⎇ ${branch}` : ""}`,
+			branch ? `⎇ ${branch}` : "",
+			"",
+		];
+		const fileChoices = found.length > 0 ? [`◈ ${found.join(" · ")}`, "◈", ""] : [""];
+		let place = "";
+		let corner = "";
+		search: for (const f of fileChoices) {
+			for (const p of placeChoices) {
+				const left = p ? `${border("─ ")}${theme.fg("muted", p)}${border(" ")}` : "";
+				const right = f ? ` ${theme.fg("success", f)}${border(" ─")}` : "";
+				if (visibleWidth(left) + visibleWidth(right) + 1 <= content + 2) {
+					place = left;
+					corner = right;
+					break search;
+				}
+			}
+		}
+		const bottomFill = Math.max(0, content + 2 - visibleWidth(place) - visibleWidth(corner));
+		out.push(border("╰") + place + border("─".repeat(bottomFill)) + corner + border("╯"));
 		return out;
 	}
 
@@ -190,7 +259,7 @@ export default function (pi: ExtensionAPI) {
 		};
 		let shown = false;
 
-		// Blank header of the same height, plus one spacer line, so the chat starts below the panel
+		// Blank header of the same height, so the chat starts below the panel
 		ctx.ui.setHeader((tui, headerTheme) => {
 			theme = headerTheme;
 			requestRender = () => tui.requestRender();
@@ -200,7 +269,7 @@ export default function (pi: ExtensionAPI) {
 				(tui as any).showOverlay(panel, { nonCapturing: true, anchor: "top-left", width: "100%" });
 			}
 			return {
-				render: () => [...lines.map(() => ""), ""],
+				render: () => lines.map(() => ""),
 				invalidate() {},
 			};
 		});
