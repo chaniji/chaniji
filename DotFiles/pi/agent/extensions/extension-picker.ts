@@ -13,7 +13,7 @@
  *
  * Extension commands are also hidden from the "/" menu, except the few in
  * MENU_COMMANDS, and so are Pi's session commands (HIDDEN_BUILTINS, reached
- * through /sessions). Hidden commands still run when typed in full.
+ * through /sessions, /models and /app). Hidden commands still run when typed in full.
  * Drawn inside book.ts's page frame like /tree, /model and /skill.
  */
 
@@ -30,9 +30,13 @@ const AGENT_DIR = join(homedir(), ".pi/agent");
 const EXTENSIONS_DIR = join(AGENT_DIR, "extensions");
 const NPM_DIR = join(AGENT_DIR, "npm/node_modules");
 // Extension commands that stay in the "/" menu; the rest are reached through /extension
-const MENU_COMMANDS = new Set(["book", "skill", "tools", "extension", "context", "sessions"]);
-// Pi's built-in session commands, reached through /sessions (session-picker.ts)
-const HIDDEN_BUILTINS = new Set(["new", "resume", "tree", "fork", "clone", "name", "compact", "copy", "session", "export", "share", "import"]);
+const MENU_COMMANDS = new Set(["book", "skill", "tools", "extension", "context", "sessions", "models", "app"]);
+// Pi's built-in commands, reached through /sessions, /models and /app (command-hubs.ts)
+const HIDDEN_BUILTINS = new Set([
+	...["new", "resume", "tree", "fork", "clone", "name", "compact", "copy", "session", "export", "share", "import"],
+	...["model", "thinking", "scoped-models", "login", "logout"],
+	...["settings", "hotkeys", "reload", "trust", "changelog", "bug", "quit"],
+]);
 
 type Command = { name: string; description: string };
 type Extension = { name: string; description: string; commands: Command[] };
