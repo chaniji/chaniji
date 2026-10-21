@@ -12,7 +12,8 @@
  *   Enter fills the input with "/memory-skills "; Esc goes back
  *
  * Extension commands are also hidden from the "/" menu, except the few in
- * MENU_COMMANDS. Hidden commands still run when typed in full.
+ * MENU_COMMANDS, and so are Pi's session commands (HIDDEN_BUILTINS, reached
+ * through /sessions). Hidden commands still run when typed in full.
  * Drawn inside book.ts's page frame like /tree, /model and /skill.
  */
 
@@ -29,7 +30,9 @@ const AGENT_DIR = join(homedir(), ".pi/agent");
 const EXTENSIONS_DIR = join(AGENT_DIR, "extensions");
 const NPM_DIR = join(AGENT_DIR, "npm/node_modules");
 // Extension commands that stay in the "/" menu; the rest are reached through /extension
-const MENU_COMMANDS = new Set(["book", "skill", "tools", "extension", "context"]);
+const MENU_COMMANDS = new Set(["book", "skill", "tools", "extension", "context", "sessions"]);
+// Pi's built-in session commands, reached through /sessions (session-picker.ts)
+const HIDDEN_BUILTINS = new Set(["new", "resume", "tree", "fork", "clone", "name", "compact", "copy", "session", "export", "share", "import"]);
 
 type Command = { name: string; description: string };
 type Extension = { name: string; description: string; commands: Command[] };
@@ -97,12 +100,13 @@ export default function (pi: ExtensionAPI) {
 				const result = await current.getSuggestions(lines, cursorLine, cursorCol, options);
 				const text = lines[cursorLine]?.slice(0, cursorCol) ?? "";
 				if (!result || !text.startsWith("/") || text.includes(" ")) return result;
-				const hidden = new Set(
-					pi
+				const hidden = new Set([
+					...HIDDEN_BUILTINS,
+					...pi
 						.getCommands()
 						.filter((c) => c.source === "extension" && !MENU_COMMANDS.has(c.name))
 						.map((c) => c.name),
-				);
+				]);
 				const items = result.items.filter((item) => !hidden.has(item.value));
 				return items.length > 0 ? { ...result, items } : null;
 			},
