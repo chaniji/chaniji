@@ -16,6 +16,6 @@
   "tuiMode": "fullscreen",
   "quietStartup": "header",
   "showHardwareCursor": true,
-  "enableSkillCommands": true,
+  "enableSkillCommands": false,
   "hideThinkingBlock": true
 }

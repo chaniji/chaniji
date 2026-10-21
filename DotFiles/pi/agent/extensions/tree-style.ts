@@ -9,12 +9,19 @@
  *   └─ π Here's what's in your current directory...
  *
  * Shown inside book.ts's page frame instead of the input box, when book mode
- * is on. The resume session picker (/resume) and the model picker (/model)
- * show there too.
+ * is on. The resume session picker (/resume), the model picker (/model), the
+ * thinking level picker (/thinking) and /settings show there too.
  * Only the looks change; moving, search, filters and branching are Pi's own.
  */
 
-import { type ExtensionAPI, ModelSelectorComponent, SessionSelectorComponent, TreeSelectorComponent } from "@earendil-works/pi-coding-agent";
+import {
+	type ExtensionAPI,
+	ModelSelectorComponent,
+	SessionSelectorComponent,
+	SettingsSelectorComponent,
+	ThinkingSelectorComponent,
+	TreeSelectorComponent,
+} from "@earendil-works/pi-coding-agent";
 
 // biome-ignore lint: Pi's internal TreeList shape
 type Any = any;
@@ -64,8 +71,17 @@ export default function (pi: ExtensionAPI) {
 		if (!book.__piBookActive || !list) return false;
 		const panel: BookPanel = { title, render: (w) => panelLines(selector, w, title, draw) };
 		book.__piBookPanel = panel;
-		// Session/tree lists close through onSelect/onCancel/onExit, the model selector through its *Callback fields
-		for (const key of ["onSelect", "onCancel", "onExit", "onSelectCallback", "onSelectAsDefaultCallback", "onCancelCallback"]) {
+		// Session/tree/thinking/settings lists close through onSelect/onCancel/onExit (thinking also
+		// onSelectAsDefault), the model selector through its *Callback fields
+		for (const key of [
+			"onSelect",
+			"onCancel",
+			"onExit",
+			"onSelectAsDefault",
+			"onSelectCallback",
+			"onSelectAsDefaultCallback",
+			"onCancelCallback",
+		]) {
 			if (typeof list[key] !== "function") continue;
 			const original = list[key];
 			list[key] = (...args: unknown[]) => {
@@ -146,4 +162,6 @@ export default function (pi: ExtensionAPI) {
 	asPopup(TreeSelectorComponent.prototype, "Session Tree", (s) => s.treeList, (s) => patchList(s.treeList));
 	asPopup(SessionSelectorComponent.prototype, "Resume Session", (s) => s.sessionList);
 	asPopup(ModelSelectorComponent.prototype, "Select Model", (s) => s);
+	asPopup(ThinkingSelectorComponent.prototype, "Thinking Level", (s) => s);
+	asPopup(SettingsSelectorComponent.prototype, "Settings", (s) => s.settingsList);
 }
