@@ -4,27 +4,60 @@
 ODACHI
 ├── Nothing OS
 │   └── Apps
+│       ├── Termux
+│       │   ├── Croc
+│       │   └── sshd
+│       └── Slice
 └── Omarchy
+    ├── Font
+    │   └── DinaRemaster Nerd Font
     └── Apps
-        ├── Hyprland
-        ├── Quickshell (Omarchy shell)
-        ├── Zen Browser
-        ├── Obsidian
-        ├── Kitty
-        ├── Neovim
-        ├── Tmux
-        ├── Pi Agent
-        ├── Affinity
-        ├── Yazi
-        ├── Lutris
-        └── Transmission
+        ├── GUI
+        │   ├── Hyprland
+        │   ├── Quickshell (Omarchy shell)
+        │   ├── Zen Browser
+        │   │   ├── uBlock Origin
+        │   │   ├── Vimium
+        │   │   ├── DuckDuckGo No-AI Search
+        │   │   ├── Old Reddit Redirect
+        │   │   ├── Youtube Shorts Blocker
+        │   │   ├── Unplug
+        │   │   ├── PureBrowse
+        │   │   ├── Video Download Helper
+        │   │   └── Hoppscotch Browser Extension
+        │   ├── Obsidian
+        │   ├── Kitty
+        │   ├── Affinity
+        │   ├── Lutris
+        │   └── Transmission
+        └── CLI
+            ├── Neovim
+            ├── Tmux
+            ├── Pi Agent
+            │   ├── compact-chat.ts
+            │   ├── compact-footer.ts
+            │   ├── compact-tools.ts
+            │   ├── context-header.ts
+            │   ├── cooking-label.ts
+            │   ├── pi-header.ts
+            │   ├── shell-input.ts
+            │   ├── tree-style.ts
+            │   ├── pi-claude-bridge
+            │   ├── pi-web-access
+            │   ├── pi-ollama-cloud
+            │   ├── pi-context-view
+            │   └── pi-hermes-memory
+            ├── Yazi
+            ├── Croc
+            ├── Git
+            ├── GitHub CLI (gh)
+            └── Docker
 
 RUNNING WOLF
 ├── Proton Mail : therunningwolf@proton.me (system)
 ├── Gmail : chaniji19@gmail.com (mobile)
 │   ├── Drive
 │   ├── Contacts
-│   ├── Slice
 │   └── WhatsApp
 ├── Tumblr
 └── GitHub
