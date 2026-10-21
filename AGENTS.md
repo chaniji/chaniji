@@ -20,9 +20,19 @@ repo's `DotFiles/` and commit it. This is the user's change history, since
 | `~/.zen/<profile>/user.js` | `DotFiles/zen/user.js` |
 | `~/.zen/<profile>/chrome/userChrome.css` | `DotFiles/zen/chrome/userChrome.css` |
 | `~/.zen/<profile>/chrome/userContent.css` | `DotFiles/zen/chrome/userContent.css` |
+| `~/.pi/agent/extensions/` | `DotFiles/pi/agent/extensions/` |
+| `~/.pi/agent/themes/` | `DotFiles/pi/agent/themes/` |
+| `~/.pi/agent/settings.json` | `DotFiles/pi/agent/settings.json` |
+| `~/.pi/agent/claude-bridge.json` | `DotFiles/pi/agent/claude-bridge.json` |
+| `~/.pi/agent/trust.json` | `DotFiles/pi/agent/trust.json` |
+| `~/.config/pi/web-search.json` | `DotFiles/pi/config/web-search.json` |
 
 Not tracked: `alacritty`, `foot`, `starship`, `lazydocker`, `lazygit`, `btop`,
 `bat` — explicitly excluded, don't re-add without being asked.
+
+Also not tracked from `~/.pi/agent/`: `auth.json`, `sessions/`, `npm/`,
+`models-store.json`, `pi-hermes-memory/` (login, session history, and memory
+data — not config).
 
 ### What to exclude when copying
 

@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "ece9f67c39cb61bb",
+        "id": "98d7a26bbb5408f2",
         "type": "tabs",
         "children": [
           {
-            "id": "40da9c21a9630292",
+            "id": "e08c001f17086e36",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -188,10 +188,15 @@
       "bases:Create new base": false
     }
   },
-  "active": "40da9c21a9630292",
+  "active": "e08c001f17086e36",
   "lastOpenFiles": [
-    "Teach/Stoicism/Map.md",
+    "What i Learned Past few Months and What  I Stick with it.md",
+    "Setup.md",
     "Board.md",
+    "Teach/Stoicsm",
+    "2026-10-21.md",
+    "Untited",
+    "Teach/Stoicism/Map.md",
     "Teach/Print Statement in TS/B String literal.md",
     "Teach/Print Statement in TS/A console.log is root.md",
     "Teach/Print Statement in TS/Map.md",
@@ -201,8 +206,6 @@
     "Teach/_test/Map.md",
     "Teach/_test/02 Next step.md",
     "Teach/_test/01 Root truth.md",
-    "Setup.md",
-    "Untitled",
     "Untitled.base"
   ]
 }

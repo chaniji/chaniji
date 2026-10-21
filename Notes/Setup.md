@@ -34,14 +34,6 @@ ODACHI
             ├── Neovim
             ├── Tmux
             ├── Pi Agent
-            │   ├── compact-chat.ts
-            │   ├── compact-footer.ts
-            │   ├── compact-tools.ts
-            │   ├── context-header.ts
-            │   ├── cooking-label.ts
-            │   ├── pi-header.ts
-            │   ├── shell-input.ts
-            │   ├── tree-style.ts
             │   ├── pi-claude-bridge
             │   ├── pi-web-access
             │   ├── pi-ollama-cloud
