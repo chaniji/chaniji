@@ -15,7 +15,7 @@ The goal is never "they can recite the fact." The goal is **understanding**: the
  learner: "teach me X"
         |
         v
-+------------------+   caveman ultra on, simple English
++------------------+   caveman ultra + ADHD mode on, simple English
 |  START           |
 +------------------+
         |
@@ -51,6 +51,12 @@ The goal is never "they can recite the fact." The goal is **understanding**: the
 +--------------------+---------------------+
         |  more steps? yes -> back to a
         | no
+        v
++------------------+
+|  4. ASSIGNMENT   |   3 tasks: easy -> hard
+|                  |---> Obsidian: Teach/X/Assignment.md
++------------------+
+        |
         v
 +------------------+
 |  DONE            |   tell folder path
@@ -136,28 +142,91 @@ Alongside the chat, keep the lesson in the learner's Obsidian vault. They keep O
 - Never touch other notes in the vault, except `Board.md` (see "Board" below).
 
 **Files in the topic folder:**
-- `Map.md` — the lesson goal (one line), the dependency map as a ```` ```mermaid ```` block (the DAG from Phase 2), a list of `[[wikilinks]]` to every node note, and one short status line (what is active now).
-  - In the Mermaid block, mark state with classes: `classDef done fill:#9f6,stroke:#333` and `classDef active fill:#ff9,stroke:#333`, then `class A done` / `class C active`.
-- One note per node: `NN <short name>.md`, numbered in teaching order (e.g. `03 Union types.md`). Contents:
-  - First line: `depends on: [[01 ...]], [[02 ...]]` — the incoming edges. These wikilinks make Obsidian's graph view show the same dependency graph.
-  - `## Why we need this` (motivate), `## The idea` (establish), `## Visual` (the same ASCII picture shown in chat), `## How it connects` (connect).
+- `Map.md` — progress cards, not a diagram. Layout:
+  ````
+  # <Topic>
+
+  **Goal:** <one line>
+
+  `████████████░░░░  3 / 4`
+
+  > [!success] 1 · [[Steps/01 <name>|01 <name>]]
+  > <one-line idea>
+
+  > [!warning] 3 · [[Steps/03 <name>|03 <name>]] · now
+  > <one-line idea>
+
+  > [!quote] 4 · <name>
+  > <one-line idea>
+
+  > [!example] Assignment
+  > Opens when all steps are done.
+  ````
+  - One card per node, in teaching order. `[!success]` = done (green), `[!warning]` + `· now` = active (yellow), `[!quote]` = not started (gray). Future steps have no `[[link]]` yet, only the name (see the rule below).
+  - The progress bar is 16 characters: `█` for the done share, `░` for the rest, then `done / total`.
+  - The last card is always the assignment: `[!example] Assignment`. When `Assignment.md` exists, it becomes `[!example] [[Assignment]]`.
+- `Steps/` — one note per node: `Steps/NN <short name>.md`, numbered in teaching order (e.g. `Steps/03 Union types.md`). Every step note has the same layout:
+  ````
+  [[Map|← Map]] · Step 3 of 5 · [[02 <name>|← prev]]
+
+  depends on: [[01 <name>]], [[02 <name>]]
+
+  ## Why
+  <one line: what problem this step solves>
+
+  ## Idea
+  <3 lines max>
+
+  ## Picture
+  ```
+  <the same ASCII picture shown in chat>
+  ```
+  (math or physics step: `![[NN-<short-name>.svg]]` instead, see "SVG pictures")
+
+  ## Links to
+  - [[01 <name>]]: <one line: how this step uses it>
+
+  ## Check
+  <added after the quiz>
+  ````
+  - The top bar links only back (Map and previous step). After the next step note exists, add ` · [[04 <name>|next →]]` to this note's top bar.
+  - `depends on:` lists the incoming edges, so Obsidian's graph view shows the same dependency graph.
   - **Create a step note only when that step starts.** Never write notes for future steps early, even if you already know their content. One step at a time.
-  - After the quiz is answered: `## Check` with the question, the learner's answer, ✓/✗, the correct answer, and the explanation. This makes each note a revision record.
-  - **Never write quiz options into a note before the learner answers** — they would see the answer early. Quizzes always happen in chat.
+  - After the quiz is answered, fill `## Check`: the question, the learner's answer, ✓/✗, the correct answer, and the explanation. This makes each note a revision record.
+  - **Never write quiz options into a note before the learner answers** — they would see the answer early. Quizzes always happen in chat
+
+**Never link to a note that does not exist yet.** Clicking such a link makes Obsidian create an empty note in the wrong folder. Future steps appear in `Map.md` as plain names only.
+
+**Teach Home:** `<vault>/Teach/Teach Home.md` lists every lesson, newest first, one line each:
+````
+# Teach Home
+
+- [[Teach/<Topic>/Map|<Topic>]] · `██████░░░░░░░░░░  2 / 5` · 2026-10-23
+````
+Create it if missing. Add the lesson line when `Map.md` is created, and update its bar whenever `Map.md` changes. Never remove lines of other lessons.
+
+**SVG pictures — math and physics:**
+- When a step is about math or physics (a graph of a function, a number line, vectors, forces, motion, waves, angles, shapes, circuits), draw an SVG picture for the step note. The ASCII picture still goes in chat.
+- File: `<vault>/Teach/<Topic>/Steps/img/NN-<short-name>.svg` (same number as the step). Embed it in the step note under `## Picture` as `![[NN-<short-name>.svg]]`, in place of the ASCII block.
+- Write the SVG by hand with `write`. For graphs, compute the points with a short `python3` or `node` script so the curve is exact. Never guess coordinates for a curve.
+- Style: `viewBox="0 0 400 300"`, a dark rounded background (`#1e1e1e`), faint grid (`#3a3a3a`), axes and labels light gray (`#aaa`), the main curve or object orange (`#e8a33c`, stroke 3), one highlight teal (`#5fb3b3`). Sans-serif, 14 px. At most one title, a few labels. One idea per picture.
+- **Check before showing:** render it with `chromium --headless --disable-gpu --screenshot=<scratch>.png --window-size=400,300 "file://<svg path>"`, then look at the PNG (`read` the PNG file). Check that every labelled point lies on its curve, arrows point the right way, and no label overlaps. Fix and render again until it is right. A wrong picture is worse than no picture.
+- Other steps keep the ASCII picture only.
 
 **Board — visuals on request:**
 - `<vault>/Board.md` is the learner's visual board. Its normal state is empty. If it is missing, create it empty.
 - When the learner asks for a visual ("show me", "draw", "visualize", or similar), overwrite `Board.md` with only that visual: a Mermaid diagram or an ASCII block in a code fence, plus at most one short title line. Then open it: `xdg-open "obsidian://open?vault=<vault name>&file=Board"`.
 - Never write to `Board.md` on your own — only when the learner asks.
-- If the learner asks to keep a drawing, copy it into the current step note under `## Visual`.
+- If the learner asks to keep a drawing, copy it into the current step note under `## Picture`.
 
 **When to write and open:**
-1. When you present the Phase 2 plan: create the folder and **only** `Map.md`, then open it. Do not create any step notes yet. Links in `Map.md` to future steps stay as unresolved `[[links]]` (Obsidian shows them faded) until those steps start.
-2. When a new node starts in Phase 3 — **and only then** — create its note, update `Map.md` (move `active`, mark finished nodes `done`), then open the node note.
-3. After each quiz reveal: add the `## Check` section to that node's note.
+1. When you present the Phase 2 plan: create the folder and **only** `Map.md`, then open it. Do not create any step notes yet. Add the lesson line to `Teach Home.md`.
+2. When a new node starts in Phase 3 — **and only then** — create its note, update `Map.md` (finished cards to `[!success]`, this card to `[!warning]` with `· now`, add its `[[link]]`, update the progress bar), add a `next →` link to the previous step note, update the bar in `Teach Home.md`, then open the node note.
+3. After each quiz reveal: fill the `## Check` section of that node's note.
+4. After the last node: write `Assignment.md` (see Phase 4).
 
 To open a note, run with `bash` (URL-encode the path, no `.md` at the end):
-`xdg-open "obsidian://open?vault=<vault name>&file=Teach%2F<Topic>%2F<note name>"`
+`xdg-open "obsidian://open?vault=<vault name>&file=Teach%2F<Topic>%2F<note name>"` — for a step note: `Teach%2F<Topic>%2FSteps%2F<note name>`
 
 The first time, Obsidian may ask "Display Mermaid diagrams in this vault?" — tell the learner to click **Allow** once.
 
@@ -165,7 +234,7 @@ Write the notes in normal, readable prose (simple English still applies). Keep t
 
 When the session wraps up, tell the learner the folder path so they can find the notes again.
 
-## The process: probe → plan → teach
+## The process: probe → plan → teach → assignment
 
 The two principles are *how* you teach. This is *when* — the shape of a teaching session. Run all three phases in order, every time; scale each phase's *size* to the topic, never its *shape*.
 
@@ -215,7 +284,7 @@ A good plan is what makes the teaching feel inevitable instead of arbitrary.
 **Then present the plan in chat — always, before any teaching.** Two parts:
 
 1. **The approach, in prose.** What we'll cover, in what order, and why this way — given where the edge sits (Phase 1a) and what the learner is reaching for (Phase 1b). A few freeform sentences.
-2. **The dependency map.** The plan's backbone as a DAG: unconditional truths at the roots, each derived node hanging off what it depends on, the goal as the sink. Write it to `Map.md` in the vault (see "Visual companion" above) as a Mermaid diagram — that's now the primary place for it — and also sketch it briefly in chat (a small ```mermaid``` block or short outline) so it's visible without switching windows. This map *is* the teaching order — Phase 3 builds it node by node. Keep it small: few nodes, short labels — a map, not the territory.
+2. **The dependency map.** The plan's backbone as a DAG: unconditional truths at the roots, each derived node hanging off what it depends on, the goal as the sink. Write it to `Map.md` in the vault as progress cards (see "Visual companion" above), and also sketch it briefly in chat (a small ASCII outline) so it's visible without switching windows. This map *is* the teaching order — Phase 3 builds it node by node. Keep it small: few nodes, short labels — a map, not the territory.
 
 **Stress-test the roots before presenting.** For every node you're treating as foundational, ask: is this genuinely an unconditional truth *for this learner*, or a disguised theorem that itself derives from something simpler they'd accept at face value? If it derives, push it down and extend the map — never found the lesson on a mid-level fact. A wrong root corrupts everything hung off it, and roots are far easier to audit in a drawn map than mid-flow.
 
@@ -230,7 +299,7 @@ For **every node** (each unconditional truth *and* each non-trivial reasoning st
 1. **Motivate.** Frame why we need this node right now — what problem it solves or what gap it closes. This applies to unconditional truths too: don't just assert one because it's true, motivate why *this* truth, *now*. "Why are we even bringing this in?"
 2. **Establish.**
    - If it's a foundational unconditional truth: state it plainly, at face value, no caveats. Surface an atomic unit if one fits.
-   - **Every step gets one small ASCII picture in chat** — about 10 lines or fewer, plain characters, in a code block, fits an 80-column terminal. The learner often learns by seeing. Put the same picture in the step note under `## Visual`.
+   - **Every step gets one small ASCII picture in chat** — about 10 lines or fewer, plain characters, in a code block, fits an 80-column terminal. The learner often learns by seeing. Put the same picture in the step note under `## Picture`. For a math or physics step, also draw an SVG picture for the note (see "SVG pictures").
    - If it's a derived step: build it up from what's already established via a motivated move (Socratic or expository), answering "how could I have discovered this?" When a Socratic step has a gradable right/wrong answer, pose it as a graded question even though the learner is "attempting the discovery" — gradable-and-Socratic is normal, not a contradiction; only fall back to an open-ended fork if there's genuinely no right answer.
 3. **Connect.** Make the dependency edge explicit — show exactly how this new node hangs off the ones already in place, so it's understood, not memorized.
 4. **Quiz-check.** Confirm the node actually landed with a quick graded question — this applies to foundations just as much as derived steps. An unconfirmed unconditional truth is exactly as dangerous as an unconfirmed derived fact: if they miss it, that node isn't solid, so stop and fix it before building anything on top of it.
@@ -240,6 +309,26 @@ For every node, also keep the vault in sync: create its note, update `Map.md`, o
 Repeat this full loop per node — don't front-load all the foundations once at the start and then stop checking. Any time a new unconditional truth is needed mid-session, it goes through motivate → establish → connect → quiz-check just like a derived step would.
 
 If you catch yourself asserting a fact the learner would have to take on faith — foundational or not — stop: either motivate it and confirm it lands, or ground it in something already established. Unmotivated, unconfirmed facts don't lock in — that's the whole point.
+
+### Phase 4 — Assignment (after the last node)
+
+When every node is done, give the learner an assignment about the topic. Teaching is not finished without it: doing the thing is what turns understanding into skill.
+
+- Write `Assignment.md` in the topic folder, then update the last card in `Map.md` to `[!example] [[Assignment]]`, then open `Assignment.md`.
+- Exactly 3 tasks, easy to hard. Each task is a checkbox with a concrete time estimate:
+  ````
+  # Assignment: <Topic>
+
+  - [ ] **Easy** (10 min): <small, real task that uses step 1–2>
+  - [ ] **Medium** (20 min): <task that combines several steps>
+  - [ ] **Hard** (30 min): <task that reaches the goal from Phase 1b>
+
+  When done: tell me in chat, and I check your answers.
+  ````
+- Every task is something the learner **does** (build, write, solve, explain in their own words, find a real example) — not a quiz and not "read about X".
+- Each task uses only nodes from this lesson. The hard task matches the learner's goal from Phase 1b.
+- The first task must be small enough to start right now.
+- In chat, show the 3 tasks in short form and tell the learner the folder path. When the learner reports back, check each task, mark the checkboxes, and add a `## Feedback` section to `Assignment.md`.
 
 ## Language — keep it simple
 
@@ -251,9 +340,11 @@ The learner's native language is not English. Use simple English everywhere in t
 - If you must use a technical term, explain it in plain words right there, the first time.
 - This applies to every phase and every node — not just the final summary.
 
-## Output style — Caveman Ultra
+## Output style — ADHD mode + Caveman Ultra
 
 The learner has ADHD. Long replies are hard to read. Before starting Phase 1, `read` the `caveman` skill (`~/.pi/agent/skills/caveman/SKILL.md`) and use its `ultra` level and write all chat output — probing, plan presentation, node explanations, recaps — in that compressed style, on top of the simple-English rule above. Less text on screen, same facts.
+
+**ADHD mode is always on.** Also follow every rule of the `i-have-adhd` skill (`read` `~/.pi/agent/skills/i-have-adhd/SKILL.md` before Phase 1) in every chat message: lead with the next action, numbered steps, restate where we are ("Step 2 of 4"), concrete time estimates, visible progress, no preamble or closers. Caveman controls *how short* the words are; i-have-adhd controls *how the message is shaped*. If they conflict, clarity wins.
 
 ASCII pictures are not compressed by caveman rules — arrows and boxes are fine inside a diagram.
 
