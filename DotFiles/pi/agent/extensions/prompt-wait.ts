@@ -1,6 +1,7 @@
 /**
- * Wait time between prompts: after a prompt is sent, the next one is locked
- * for 5 minutes, to read the answer and think first.
+ * Wait time between prompts: after the answer is done, the next prompt is
+ * locked for 5 minutes, to read the answer and think first. Prompts are also
+ * locked while the answer is still running.
  *
  *   ╭─ 3/3 ───────────────────────────── 3:40 ─╮
  *   │ ❯ how fix port                            │
@@ -33,6 +34,8 @@ function clock(ms: number): string {
 export default function (pi: ExtensionAPI) {
 	// Time the lock ends; 0 means not locked
 	let until = 0;
+	// A prompt was sent and its answer is still running
+	let answering = false;
 	let flashUntil = 0;
 	let timer: ReturnType<typeof setInterval> | undefined;
 	let theme: Theme = { fg: (_color, text) => text };
@@ -72,6 +75,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("session_start", async (_event, ctx) => {
 		stop();
+		answering = false;
 		if (ctx.mode !== "tui") return;
 		theme = ctx.ui.theme as unknown as Theme;
 		ui = ctx.ui as unknown as Ui;
@@ -88,14 +92,21 @@ export default function (pi: ExtensionAPI) {
 		if (event.source === "extension" || text === "" || text.startsWith("/") || text.startsWith("!")) {
 			return { action: "continue" };
 		}
-		if (left() > 0) {
+		if (answering || left() > 0) {
 			// Put the text back once Pi has cleared the input
 			setTimeout(() => ctx.ui.setEditorText(event.text), 0);
 			flashUntil = Date.now() + FLASH_MS;
 			show();
 			return { action: "handled" };
 		}
-		start();
+		answering = true;
 		return { action: "continue" };
+	});
+
+	// The countdown starts when the answer is done
+	pi.on("agent_end", async () => {
+		if (!answering) return;
+		answering = false;
+		start();
 	});
 }
