@@ -22,6 +22,9 @@ const GRID_ROWS = 3;
 // Same context files Pi itself loads from a folder
 const AGENT_FILES = ["AGENTS.override.md", "AGENTS.md", "AGENTS.MD", "CLAUDE.md", "CLAUDE.MD"];
 
+// Set by book.ts: full screen on, the panel hides so the page gets its rows
+const book = globalThis as { __piBookFull?: boolean };
+
 // biome-ignore lint: loaded at runtime from pi-context-view
 type Mod = any;
 
@@ -249,6 +252,7 @@ export default function (pi: ExtensionAPI) {
 		// Pinned to the top: a non-capturing overlay never scrolls and never takes input
 		const panel = {
 			render: (w: number) => {
+				if (book.__piBookFull) return [];
 				if (w !== width || lines.length === 0) {
 					width = w;
 					rebuild();
@@ -269,7 +273,7 @@ export default function (pi: ExtensionAPI) {
 				(tui as any).showOverlay(panel, { nonCapturing: true, anchor: "top-left", width: "100%" });
 			}
 			return {
-				render: () => lines.map(() => ""),
+				render: () => (book.__piBookFull ? [] : lines.map(() => "")),
 				invalidate() {},
 			};
 		});

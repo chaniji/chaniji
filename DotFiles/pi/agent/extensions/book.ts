@@ -13,6 +13,7 @@
  *   taller than the screen. The frame stays fixed, only the text moves
  * - /book nav: arrows move through pages (← →) and scroll (↑ ↓), Esc closes
  * - /book: toggle book mode; /book <n>, /book prev, /book next: go to a page
+ * - /book full: full screen on/off (on by default); hides the Context Usage panel so the page gets its rows
  * - Answers follow the i-have-adhd and caveman (ultra) skills on every turn
  */
 
@@ -50,7 +51,9 @@ type Renderable = { render: (width: number) => string[] };
 type Viewport = { viewportHeight: number; isFollowingEnd: boolean; scrollToEnd: () => void; child?: { children: Renderable[] } };
 // Set by tree-style.ts: a selector (/tree, /resume) drawn inside the page frame
 type BookPanel = { title: string; render: (width: number) => string[] };
-const shared = globalThis as { __piBookActive?: boolean; __piBookPanel?: BookPanel };
+// __piBookFull: full screen on; context-header.ts hides its panel then
+// __piBookBadge: text on the right of the top border (prompt-wait.ts time left)
+const shared = globalThis as { __piBookActive?: boolean; __piBookPanel?: BookPanel; __piBookFull?: boolean; __piBookBadge?: string };
 
 type Theme = { fg: (color: string, text: string) => string; bold: (text: string) => string };
 
@@ -110,6 +113,8 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
 		page = 0;
 		shared.__piBookActive = false;
+		// Full screen is the default
+		shared.__piBookFull = true;
 		if (ctx.mode !== "tui") return;
 		theme = ctx.ui.theme as unknown as Theme;
 		ctx.ui.setWorkingVisible(false);
@@ -156,7 +161,7 @@ export default function (pi: ExtensionAPI) {
 
 
 	pi.registerCommand("book", {
-		description: "Toggle book mode, or move through pages: /book nav | <n> | prev | next",
+		description: "Toggle book mode, or move through pages: /book nav | full | <n> | prev | next",
 		handler: async (args, ctx) => {
 			const arg = args?.trim() ?? "";
 			if (arg === "nav") {
@@ -190,10 +195,21 @@ export default function (pi: ExtensionAPI) {
 				}
 				return;
 			}
+			if (arg === "full") {
+				enabled = true;
+				shared.__piBookFull = !shared.__piBookFull;
+				// The chat area changes height: measure it again
+				heightKey = "";
+				scroll = 0;
+				requestRender();
+				return;
+			}
 			if (arg === "prev") return go((page || pageCount) - 1);
 			if (arg === "next") return go((page || pageCount) + 1);
 			if (/^\d+$/.test(arg)) return go(Number(arg));
 			enabled = !enabled;
+			// Book mode on starts in full screen; off brings the context panel back
+			shared.__piBookFull = enabled;
 			if (!enabled) shared.__piBookActive = false;
 			page = 0;
 			ctx.ui.notify(enabled ? "Book mode on" : "Book mode off", "info");
@@ -286,7 +302,7 @@ export default function (pi: ExtensionAPI) {
 		// Pi's input area is taller while an answer runs (status line), so the chat area
 		// shrinks then. Use the smallest height seen for this terminal size: the page
 		// keeps one size and one place, and never slides under the context panel
-		const size = `${process.stdout.rows}x${width}`;
+		const size = `${process.stdout.rows}x${width}x${shared.__piBookFull === true}`;
 		if (size !== heightKey) {
 			heightKey = size;
 			minHeight = Number.POSITIVE_INFINITY;
@@ -313,7 +329,8 @@ export default function (pi: ExtensionAPI) {
 		// Only text on the frame: the page number, plus a spinner while Pi works
 		const spin = working ? ` ${SPINNER[frame]}` : "";
 		const label = panel ? panel.title : navigating ? `◀ ${current}/${pageCount} ▶` : `${current}/${pageCount}`;
-		const top = rule("╭", `${border("─ ")}${theme.fg("accent", `${label}${spin}`)}${border(" ")}`, "╮");
+		const badge = shared.__piBookBadge ? ` ${shared.__piBookBadge}${border(" ─")}` : "";
+		const top = rule("╭", `${border("─ ")}${theme.fg("accent", `${label}${spin}`)}${border(" ")}`, "╮", badge);
 		const bottom = rule("╰", "", "╯");
 		const side = (line: string) => {
 			const clipped = truncateToWidth(line, inner);
