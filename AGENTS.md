@@ -1,3 +1,9 @@
+---
+title: Untitled
+author: chan
+date: 2026-10-23T16:46:34Z
+---
+
 # agent.md
 
 ## Sync rule: Omarchy configs → this repo

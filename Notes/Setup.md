@@ -1,3 +1,9 @@
+---
+title: Untitled
+author: chan
+date: 2026-10-24T09:45:32Z
+---
+
 # System Setup
 
 ```
@@ -25,9 +31,8 @@ ODACHI
         │   │   ├── PureBrowse
         │   │   ├── Video Download Helper
         │   │   └── Hoppscotch Browser Extension
-        │   ├── Obsidian
         │   ├── Kitty
-        │   ├── Affinity
+        │   ├── Inkscape
         │   ├── Lutris
         │   └── Transmission
         └── CLI
@@ -51,7 +56,6 @@ RUNNING WOLF
 │   ├── Drive
 │   ├── Contacts
 │   └── WhatsApp
-├── Tumblr
 └── GitHub
     └── Ollama
 ```
